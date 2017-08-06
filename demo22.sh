@@ -7,9 +7,9 @@ ACCOUNT=''
 SHARE=''
 ENVIRONMENT='AzureCloud'
 
-## simple function to compare version
-ver_gt() { test "$(echo -e "$1\n$2"  | sort -V | head -n 1)" != "$1" && return 0 || return 1; }
-ver_lt() { test "$(echo -e "$1\n$2"  | sort -V | head -n 1)" != "$2" && return 0 || return 1; }
+## simple function to compare version,echo has different implementatoin in SHELL, use printf to avoid compatability issue. 
+ver_gt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$1"; }
+ver_lt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$2"; }
 
 ## print the log in custom format <to do: add color support>
 print_log()
@@ -37,7 +37,6 @@ usage()
     echo '-s | --share <value >Specify the file share name'
     echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureUSGovernment. The default is AzureCloud'
 }
-
 
 
 
@@ -101,18 +100,69 @@ fi
 ## verify the SMB Encrption support. 
 print_log "Verify SMB Encryption support " "info"
 
+DISTNAME=''
+DISTVER=''
+KERVER=''
 
-UBUNTUVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
+## Ubuntu OS checks the distribution version
+DISTNAME=$(lsb_release -d | grep -o -i ubuntu)
+KERVER=$(uname -r | cut -d - -f 1)
 
-echo 'system version is  ' "$UBUNTUVER" 
+if [ -n "$DISTNAME" ]; then
+
+ DISTVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
+ print_log  "Ubuntu distribution version  is  "$DISTVER" "  "info"
+ ver_lt "$DISTVER" "16.4.0"
 
 
+ if [ $? -eq 0 ] ; then
+   print_log "system DOES NOT support SMB Encryption"  "warning"
+   SMB3=0
+ else
+   print_log "system supports SMB Encryption" "info"
+   SMB3=1
+ fi
 
-ver_lt "$UBUNTUVER" "16.4.0"
-
-if [ $? -eq 0 ]; then
-  print_log "system DOES NOT support SMB Encryption"  "warning"
+## Other distributions check kernel versions. 
 else
-  print_log "system supports SMB Encryption" "info"
+
+ print_log  "Linux kernel version is  "$KERVER" "  "info"
+ ver_lt "$KERVER" "4.11.0"
+
+ if [ $? -eq 0 ]; then
+   
+   print_log "system DOES NOT support SMB Encryption"  "warning"
+   SMB3=0
+ else
+   print_log "system supports SMB Encryption" "info"
+   SMB3=1
+ fi
 fi
+
+
+## Prompt user for UNC path if no options are provided.
+ver_gt "$KERVER"  "4.9.1"
+
+## Verify port 445 reachability. 
+
+## Verify  IP region if SMB encrytion is not supported.
+
+## Map drive 
+
+if [ "$SMB3" -eq 0 ]; then
+  if `grep -q unknown-245 /var/lib/dhcp/dhclient.eth0.leases`; then
+    print_log "VM running on Azure" "info"
+  fi
+  
+fi
+
+
+
+
+
+
+
+
+
+
 
