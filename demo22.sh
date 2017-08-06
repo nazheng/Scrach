@@ -6,6 +6,9 @@ UNCPATH=''
 ACCOUNT=''
 SHARE=''
 ENVIRONMENT='AzureCloud'
+SAFQDN=''
+IPREGION=''
+
 
 ## simple function to compare version,echo has different implementatoin in SHELL, use printf to avoid compatability issue. 
 ver_gt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$1"; }
@@ -14,17 +17,20 @@ ver_lt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$2"; }
 ## print the log in custom format <to do: add color support>
 print_log()
 {
+
 case  "$2" in
 info)
-  echo '[RUNNNG]------' "${1}"
+  echo '[RUNNNG]--------' "${1}"
    ;;
 warning)
-  echo '[WARNING]------' "${1}"
+  echo '[WARNING]-------' "${1}"
    ;;
 error)
-  echo '[ERROR]------' "${1}"
+  echo '[ERROR]---------' "${1}"
    ;;
 esac
+
+
 }
 
 
@@ -38,6 +44,67 @@ usage()
     echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureUSGovernment. The default is AzureCloud'
 }
 
+## Get IP range
+get-ip-region()
+{
+
+  #constant file name
+xmlfile="azurepubliciprange.xml"
+
+if [ ! -f "$xmlfile" ]; then
+
+#get the download file path
+curl -o download.html -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
+
+
+#download the file into local file
+echo '+++ downloading Azure Public IP range'
+curl -o "$xmlfile" -s "$RET"
+
+fi
+
+RET=$(cat "$xmlfile" | awk -v ipaddr="$1" '
+
+#function to verify if IP network address matches with the IP range
+function IpInRange(iprange, ipaddr)
+{
+
+ #printf "Checking IP address %s in IP Range %s\n", ipaddr, iprange
+
+ split(iprange, a, "/")
+
+ subnetaddr=a[1]
+ cidrlen=a[2]
+
+ tmp=32-cidrlen
+ ipmax=lshift(1,32)-1
+ mask=and((compl(lshift(1,tmp)-1)),ipmax)
+
+ split(ipaddr, b, ".")
+ ipnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
+
+ split(subnetaddr, b, ".")
+ subnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
+
+
+ ipnet=and(ipnetdec, mask)
+ subnet=and(subnetdec,mask)
+
+ return (subnet == ipnet)
+}
+
+BEGIN{ region = "" }
+
+/Region Name/ { split($0, a, "\""); region=a[2]}
+
+/IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
+
+')
+
+IPREGION="$RET"
+
+}
 
 
 ## Parse the arguments if it is non-empty
@@ -86,11 +153,25 @@ done
 
 ## make sure required options are specified.
 if ( [ -n "$UNCPATH" ] ); then
-  echo "UNC path option is specified, other options will be ignored (use -h or --help for help)"
+  print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
+  SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' ) 
+
 elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
-  echo "Form the UNC path based on the options specified"
+
+  print_log  "Form the UNC path based on the options specified" "info"
+
+  SUFFIX=''
+  case "$ENVIRONMENT" in 
+     azurecloud) SUFFIX='.file.core.windows.net' ;;
+     azurechinacloud) SUFFIX='.file.core.chinacloudapi.cn' ;;
+     azureusgovernment) SUFFIX='.file.usgovcloudapi.net' ;;
+     AzureGermanCloud) SUFFIX='.file.core.cloudapi.de' ;;
+  esac
+  SAFQDN="$ACCOUNT""$SUFFIX"
+  UNCPATH="//""$SAFQDN""/""$SHARE"
+
 else
- echo "$PROG: missing options (use -h or --help for help)" >&2
+ print_log  "$PROG: missing options (use -h or --help for help)"  "error"
   return 2
 fi
 
@@ -104,10 +185,10 @@ DISTNAME=''
 DISTVER=''
 KERVER=''
 
-## Ubuntu OS checks the distribution version
 DISTNAME=$(lsb_release -d | grep -o -i ubuntu)
 KERVER=$(uname -r | cut -d - -f 1)
 
+## Ubuntu OS checks the distribution version
 if [ -n "$DISTNAME" ]; then
 
  DISTVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
@@ -129,10 +210,9 @@ else
  print_log  "Linux kernel version is  "$KERVER" "  "info"
  ver_lt "$KERVER" "4.11.0"
 
- if [ $? -eq 0 ]; then
-   
+ if [ $? -eq 0 ]; then   
    print_log "system DOES NOT support SMB Encryption"  "warning"
-   SMB3=0
+   SMB3=
  else
    print_log "system supports SMB Encryption" "info"
    SMB3=1
@@ -140,22 +220,136 @@ else
 fi
 
 
+## Check if system has fix for known idle timeout/reconnect issues, not terminate error though. 
+if  ( ver_gt "$KERVER"  "4.9.1" ) || ( ( ver_gt "$KERVER"  "4.8.15" ) &&  ( ver_lt "KEVER" "4.9.0" ) ) || ( ( ver_gt "$KERVER"  "4.4.39" )  &&  ( ver_lt "KEVER" "4.5.0") )  ; then
+ print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
+else
+ print_log "Kernel has not been  patched with the fixes that prevent idle timeout issues" "warning"
+fi
+
 ## Prompt user for UNC path if no options are provided.
-ver_gt "$KERVER"  "4.9.1"
+if  [ -z "$SAFQDN" ]; then
+  print_log "type the storage account name, followed by [ENTER]:"  'info'
+  read ACCOUNT
+
+  print_log "type the share path, followed by [ENTER]:" "info"
+  read SHARE
+
+  print_log "choose the Azure Environment:"  "info"
+  PS3='Please enter your choice: '
+  SUFFIX=''
+  ## SH points to /bib/dash on ubuntu system, but dash does not support array/select. 
+  options=('azurecloud' 'azurechinacloud' 'azuregermancloud' 'azureusgovernment')
+
+  select opt in "${options[@]}"
+  do
+    case $opt in
+        "azurecloud")
+            SUFFIX=".file.core.windows.net"
+            break
+            ;;
+        "azurechinacloud")
+            SUFFIX=".file.core.chinacloudapi.cn"
+            break
+            ;;
+        "azuregermancloud")
+            SUFFIX=".file.core.cloudapi.de"
+            break
+            ;;
+        "azureusgovernment")
+           SUFFIX=".file.usgovcloudapi.net"
+           break
+            ;;
+        *) echo invalid option;;
+    esac
+  done
+  SAFQDN="$ACCOUNT""$SUFFIX"
+  UNCPATH="//""$SAFQDN""/""$SHARE"
+fi
+
+print_log " storage account FQDN is "$SAFQDN"" "info"
 
 ## Verify port 445 reachability. 
 
-## Verify  IP region if SMB encrytion is not supported.
-
-## Map drive 
-
-if [ "$SMB3" -eq 0 ]; then
-  if `grep -q unknown-245 /var/lib/dhcp/dhclient.eth0.leases`; then
-    print_log "VM running on Azure" "info"
-  fi
+if [ -n "$SAFQDN" ] ; then
   
+   RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1)
+   echo "$RET" | grep -i succeeded
+
+   if [ "$?" -eq  0 ] ; then
+     print_log "Port 445 is reachable from this client." "info"
+   else
+     print_log "Port 445 is not reachable from this client and the error is ""$RET"  "error"
+     return
+   fi
 fi
 
+SMB3=0
+
+## Verify  IP region if SMB encrytion is not supported.
+if [ "$SMB3" -eq 0 ]; then
+  DHCP25=''
+  PIP=''
+  SAIP=''
+  ClientIPRegion=''
+  SARegion=''
+
+  ## verify client is Azure VM or not. On untuntu DHCP lease option can be used to check it but Red Hat does not seem to support it. Use client IP too. 
+  grep -q unknown-245 /var/lib/dhcp/dhclient.eth0.leases  2&>1
+  DHCP245=$?
+
+  PIP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+  get-ip-region "$PIP"
+
+  ClientIPRegion="$IPREGION"
+
+  if (  [  "$DHCP245" -eq 0 ]  || [  "$ClientIPRegion" != '' ] ); then
+     print_log "client is Azure VM and running in region ""$ClientIPRegion" "info"
+
+     SAIP=$(dig +short "$SAFQDN" | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
+     get-ip-region "$SAIP"
+     SARegion="$IPREGION"
+     print_log "storage account region is ""$SARegion" "info"
+     if [ "$SARegion" != "$ClientIPRegion" ] ; then
+       print_log "Azure VM region mismatches with Storage Account Region. SMB 2.1 does not support encryption, Please make sure Azure VM is in the same region as storage account. " "error"
+       return
+     fi
+
+  fi
+
+fi
+
+## map drive for user, start tcpdump in background.
+if [ -f filemountdiag.cap ]; then
+ rm -f filemountdiag.cap
+ touch filemountdiag.cap
+fi
+
+sudo nohup tcpdump -i any port 445  -w filemountdiag.cap  > /dev/null 2>&1 &
+PID=$(sudo pgrep tcpdump)
+
+
+print_log "type the local mount point, followed by [ENTER]:" "info"
+read mountpoint
+
+if [ ! -d "$mountpoint" ] ;then
+  mkdir "$mountpoint"
+fi
+
+print_log "type the storage account access key, followed by [ENTER]:" "info"
+read password
+
+
+print_log "UNC path is ""$UNCPATH" "info"
+print_log "Storage account FQDN is ""$SAFQDN" "info"
+
+username=$( echo "SAFQDN" | cut -d '.' -f 1)
+
+sudo mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password="$password",dir_mode=0777,file_mode=0777,sec=ntlmssp
+
+echo  result is $?
+
+sudo  kill "$PID"
 
 
 
