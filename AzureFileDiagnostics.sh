@@ -91,6 +91,7 @@ done
 ## make sure required options are specified.
 if ( [ -n "$UNCPATH" ] ); then
   print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
+  #UNCPATH=echo "$UNCPATH" | sed  's/[\/\\]///g')
   SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' ) 
 
 elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
@@ -219,10 +220,10 @@ else
 
  if [ $? -eq 0 ]; then   
    print_log "system DOES NOT support SMB Encryption"  "warning"
-   SMB3=
+   SMB3=1
  else
    print_log "system supports SMB Encryption" "info"
-   SMB3=1
+   SMB3=0
  fi
 fi
 
@@ -292,7 +293,7 @@ if [ -n "$SAFQDN" ] ; then
 fi
 
 ## Verify  IP region if SMB encrytion is not supported.
-if [ "$SMB3" -eq 0 ]; then
+if [ "$SMB3" -eq 1 ]; then
   DHCP25=''
   PIP=''
   SAIP=''

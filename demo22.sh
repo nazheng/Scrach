@@ -159,7 +159,9 @@ done
 ## make sure required options are specified.
 if ( [ -n "$UNCPATH" ] ); then
   print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
-  SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' ) 
+  UNCPATH=$(echo "$UNCPATH" | tr '/' '\\')
+  echo $UNCPATH
+  SAFQDN=$(echo "$UNCPATH" | sed 's/[\\]/ /g' | awk '{print $1}' ) 
 
 elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
 
