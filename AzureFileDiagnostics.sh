@@ -356,7 +356,7 @@ disable_log()
  PID=$(sudo pgrep tcpdump)
  sudo kill "$PID"
 
- command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI"
+ command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
  sudo sh -c  "$command"
  CIFSLOG="./""$LOGDIR""/cifs.txt" 
  cp /var/log/kern.log  "$CIFSLOG"
