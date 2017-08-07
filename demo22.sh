@@ -28,6 +28,9 @@ warning)
 error)
   echo '[ERROR]---------' "${1}"
    ;;
+*)
+  echo '[RUNNNG]--------' "${1}"
+   ;;
 esac
 
 
@@ -105,6 +108,8 @@ BEGIN{ region = "" }
 IPREGION="$RET"
 
 }
+
+
 
 
 ## Parse the arguments if it is non-empty
@@ -319,14 +324,65 @@ if [ "$SMB3" -eq 0 ]; then
 
 fi
 
-## map drive for user, start tcpdump in background.
-if [ -f filemountdiag.cap ]; then
- rm -f filemountdiag.cap
- touch filemountdiag.cap
-fi
 
-sudo nohup tcpdump -i any port 445  -w filemountdiag.cap  > /dev/null 2>&1 &
-PID=$(sudo pgrep tcpdump)
+
+## map drive for user, start tcpdump in background.
+
+## Enable  CIFS debug logs including packet trace and CIFS kernel debug trace. 
+enable_log()
+{
+
+ LOGDIR="MSFileMountDiagLog"
+
+ if [ ! -d "$LOGDIR" ]; then
+   mkdir "$LOGDIR"
+ fi
+
+ TCPLOG="./""$LOGDIR""/packet.cap"
+ if [ -f "$TCPLOG" ] ; then
+   rm -f "$TCPLOG"
+ fi
+ command="tcpdump -i any port 445  -w ""$TCPLOG"" &"
+ sudo sh -c  "$command"
+ command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI"
+ sudo sh -c  "$command"
+}
+
+disable_log()
+{
+ PID=$(sudo pgrep tcpdump)
+ sudo kill "$PID"
+
+ command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI"
+ sudo sh -c  "$command"
+ CIFSLOG="./""$LOGDIR""/cifs.txt" 
+ cp /var/log/kern.log  "$CIFSLOG"
+}
+
+
+print_log "Do you want to tun on diagnostics logs"
+
+options=("yes" "no")
+
+  select opt in "${options[@]}"
+  do
+    case $opt in
+        yes)
+	    #comform to BASH, 0 means true. 
+            DIAGON=0
+            break
+            ;;
+        no)
+            DIAGON=1
+            break
+            ;;
+        *) echo please type yes or no;;
+    esac
+  done
+
+if [ "$DIAGON" -eq 0 ]; then
+   enable_log  
+fi
 
 
 print_log "type the local mount point, followed by [ENTER]:" "info"
@@ -339,17 +395,22 @@ fi
 print_log "type the storage account access key, followed by [ENTER]:" "info"
 read password
 
+username=$( echo "$SAFQDN" | cut -d '.' -f 1)
 
-print_log "UNC path is ""$UNCPATH" "info"
-print_log "Storage account FQDN is ""$SAFQDN" "info"
+#print_log "UNC path is ""$UNCPATH" "info"
+#print_log "Storage account FQDN is ""$SAFQDN" "info"
+#print_log "user name is ""$username"
 
-username=$( echo "SAFQDN" | cut -d '.' -f 1)
+command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password="$password",dir_mode=0777,file_mode=0777,sec=ntlmssp"
+sudo sh -c "$command"
+sleep 1
 
-sudo mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password="$password",dir_mode=0777,file_mode=0777,sec=ntlmssp
+if [ "$DIAGON" -eq 0 ]; then
+   disable_log
+fi
 
-echo  result is $?
 
-sudo  kill "$PID"
+
 
 
 
