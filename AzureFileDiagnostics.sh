@@ -41,41 +41,48 @@ usage()
     echo '-u | --uncpath <value> Specify Azure File share UNC path like \\storageaccount.file.core.windows.net\sharename. if this option is provided, below options are ignored'
     echo '-a | --account <value> Specify Storage Account Name'
     echo '-s | --share <value >Specify the file share name'
-    echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureUSGovernment. The default is AzureCloud'
+    echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureGermanCloud, AzureUSGovernment. The default is AzureCloud'
 }
+
+
+## When invoking script by sh, by default on ubunntu /bin/sh is mapped to DASH which has many constraints on scripting (e.g. DASH does not support array). But so checking SHELL version first. 
+if [ -z $BASH_VERSION ]; then
+   print_log "current SHELL is not BASH. please use bash to run this script" "error"
+   exit 1
+fi
 
 
 if [ $# -gt 0 ] ; then
 
 
-## Detect if system has enhanced getopt
-NEWGETOPT=false
-getopt -T >/dev/null
+ ## Detect if system has enhanced getopt
+ NEWGETOPT=false
+ getopt -T >/dev/null
 
-if [ $? -eq 4 ]; then
+ if [ $? -eq 4 ]; then
     NEWGETOPT=true
-fi
+ fi
 
-SHORT_OPTS=u:a:s:e:h
-LONG_OPTS=uncpath:,storageaccount:,share:,azureenvironment:,help
+ SHORT_OPTS=u:a:s:e:h
+ LONG_OPTS=uncpath:,storageaccount:,share:,azureenvironment:,help
 
-## Use getopt to sanitize the arguments first.
-if [ "$NEWGETOPT" ]; then
-  ARGS=`getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@"`
-else
-  ARGS=`getopt $SHORT_OPTS "$@"`
-fi
+ ## Use getopt to sanitize the arguments first.
+ if [ "$NEWGETOPT" ]; then
+   ARGS=`getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@"`
+ else
+   ARGS=`getopt $SHORT_OPTS "$@"`
+ fi
 
-if [ $? != 0 ] ; then
+ if [ $? != 0 ] ; then
      echo "Usage error (use -h or --help for help)"
-     return 2
-fi
+     exit 2
+ fi
 
-eval set -- $ARGS
-print_log "system supports SMB Encryption" "info" ||
-## Process parsed options
-echo "$@"
-while [ $# -gt 0 ]; do
+ eval set -- $ARGS
+ 
+ ## Process parsed options
+ echo "$@"
+ while [ $# -gt 0 ]; do
     case "$1" in
         -u | --uncpath)   UNCPATH="$2"; shift;;
         -a | --account)  ACCOUNT="$2"; shift;;
@@ -83,18 +90,18 @@ while [ $# -gt 0 ]; do
         -e | --azureenvironment)  ENVIRONMENT="$2"; shift;;
         -h | --help)
          usage
-         return 0;;
+         exit 0;;
         esac
     shift
-done
+ done
 
-## make sure required options are specified.
-if ( [ -n "$UNCPATH" ] ); then
+ ## make sure required options are specified.
+ if ( [ -n "$UNCPATH" ] ); then
   print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
-  #UNCPATH=echo "$UNCPATH" | sed  's/[\/\\]///g')
+  UNCPATH=$(echo "$UNCPATH" | sed    's/\\/\//g')
   SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' ) 
 
-elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
+ elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
 
   print_log  "Form the UNC path based on the options specified" "info"
 
@@ -108,10 +115,10 @@ elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "
   SAFQDN="$ACCOUNT""$SUFFIX"
   UNCPATH="//""$SAFQDN""/""$SHARE"
 
-else
- print_log  "$PROG: missing options (use -h or --help for help)"  "error"
-  return 2
-fi
+ else
+  print_log  "$PROG: missing options (use -h or --help for help)"  "error"
+  exit 2
+ fi
 
 fi
 
@@ -138,7 +145,7 @@ RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\
 
 
 #download the file into local file
-echo '+++ downloading Azure Public IP range'
+print_log '+++ downloading Azure Public IP range XML file' "info"
 curl -o "$xmlfile" -s "$RET"
 
 fi
@@ -201,7 +208,7 @@ if [ -n "$DISTNAME" ]; then
 
  DISTVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
  print_log  "Ubuntu distribution version  is  "$DISTVER" "  "info"
- ver_lt "$DISTVER" "16.4.0"
+ ver_lt "$DISTVER" "16.04"
 
 
  if [ $? -eq 0 ] ; then
@@ -232,7 +239,7 @@ fi
 if  ( ver_gt "$KERVER"  "4.9.1" ) || ( ( ver_gt "$KERVER"  "4.8.15" ) &&  ( ver_lt "KEVER" "4.9.0" ) ) || ( ( ver_gt "$KERVER"  "4.4.39" )  &&  ( ver_lt "KEVER" "4.5.0") )  ; then
  print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
 else
- print_log "Kernel has not been  patched with the fixes that prevent idle timeout issues" "warning"
+ print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
 fi
 
 ## Prompt user for UNC path if no options are provided.
@@ -288,7 +295,7 @@ if [ -n "$SAFQDN" ] ; then
      print_log "Port 445 is reachable from this client." "info"
    else
      print_log "Port 445 is not reachable from this client and the error is ""$RET"  "error"
-     return
+     exit 2
    fi
 fi
 
@@ -317,8 +324,8 @@ if [ "$SMB3" -eq 1 ]; then
      SARegion="$IPREGION"
      print_log "storage account region is ""$SARegion" "info"
      if [ "$SARegion" != "$ClientIPRegion" ] ; then
-       print_log "Azure VM region mismatches with Storage Account Region. SMB 2.1 does not support encryption, Please make sure Azure VM is in the same region as storage account. " "error"
-       return
+       print_log "Azure VM region mismatches with Storage Account Region, Please make sure Azure VM is in the same region as storage account. More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux " "error"
+       exit 2
      fi
 
   fi
@@ -362,7 +369,7 @@ disable_log()
  cp /var/log/kern.log  "$CIFSLOG"
 }
 
-## Prompt user to type the local mount point and storage account access key. 
+## Prompt user to select diagnostics option
 print_log "Do you want to tun on diagnostics logs"
 
 options=("yes" "no")
@@ -388,6 +395,7 @@ if [ "$DIAGON" -eq 0 ]; then
 fi
 
 
+## Prompt user to type the local mount point and storage account access key. 
 print_log "type the local mount point, followed by [ENTER]:" "info"
 read mountpoint
 
