@@ -200,7 +200,7 @@ DISTNAME=''
 DISTVER=''
 KERVER=''
 
-DISTNAME=$(lsb_release -d | grep -o -i ubuntu)
+DISTNAME=$(uname -a | grep -o -i ubuntu)
 KERVER=$(uname -r | cut -d - -f 1)
 
 ## Ubuntu OS checks the distribution version
