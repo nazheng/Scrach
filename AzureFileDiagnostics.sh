@@ -287,8 +287,14 @@ print_log " storage account FQDN is "$SAFQDN"" "info"
 ## Verify port 445 reachability. 
 
 if [ -n "$SAFQDN" ] ; then
-  
+   command -v nc >/dev/null 2>&1 
+   if $? ; then
    RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1)
+   else
+   ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.   
+   timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
+   fi 
+
    echo "$RET" | grep -i succeeded
 
    if [ "$?" -eq  0 ] ; then
