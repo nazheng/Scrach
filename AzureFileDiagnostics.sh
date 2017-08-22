@@ -45,13 +45,14 @@ usage()
 }
 
 
-## When invoking script by sh, by default on ubunntu /bin/sh is mapped to DASH which has many constraints on scripting (e.g. DASH does not support array). But so checking SHELL version first. 
+## When invoking script by sh, it would have syntax error. it happens becuase, by default on ubunntu /bin/sh is mapped to DASH which has many constraints on scripting (e.g. DASH does not support array or select). 
+## BASH is still default SHELL for SSH. Force to use bash  SHELL now. it does not appear to  impact user expereince a lot. 
 if [ -z $BASH_VERSION ]; then
    print_log "current SHELL is not BASH. please use bash to run this script" "error"
    exit 1
 fi
 
-
+##  argument # is zero which means user does not specify argument to run the script. 
 if [ $# -gt 0 ] ; then
 
 
@@ -200,11 +201,58 @@ DISTNAME=''
 DISTVER=''
 KERVER=''
 
-DISTNAME=$(uname -a | grep -o -i ubuntu)
+DISTNAME=$(cat /etc/*release | grep \\bNAME=)
+DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
+#DISTNAME=$(uname -a | grep -o -i ubuntu)
 KERVER=$(uname -r | cut -d - -f 1)
 
+case $DISTNAME  in
+ *Redhat* ) 
+  if ( ver_lt $DISTVER '7.0' ); then 
+    print_log "The linux client distribution name is $DISTNAME that should have 7.0" "error"
+    exit 2
+  fi
+  ;;
+ *CentOS* )
+  if ( ver_lt $DISTVER '7.0' ); then
+    print_log "The linux client distribution name is $DISTNAME that should have 7.0" "error"
+    exit 2
+  fi
+  ;;
+
+ *Ubuntu* ) 
+  if ( ver_lt $DISTVER '14.04' ); then
+    print_log "The linux client distribution name is $DISTNAME that should have 14.04" "error"
+    exit 2
+  fi
+  ;;
+
+ *openSUSE* ) 
+  if ( ver_l $DISTVER '13.2' ); then
+    print_log "The linux client distribution name is $DISTNAME that should have 13.2" "error"
+    exit 2
+  fi
+  ;;
+ *SLES* )  
+  if ( ver_l $DISTVER '12.0' ); then
+    print_log "The linux client distribution name is $DISTNAME that should have 12.0" "error"
+    exit 2
+  fi
+  ;;
+
+ *Debian* )
+  if ( ver_l $DISTVER '8.0' ); then
+    print_log "The linux client distribution name is $DISTNAME that should have 8.0" "error"
+    exit 2
+  fi
+  ;;
+
+esac
+
+
+
 ## Ubuntu OS checks the distribution version
-if [ -n "$DISTNAME" ]; then
+if [[ echo "$DISTNAME" | grep Ubuntu ]]; then
 
  DISTVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
  print_log  "Ubuntu distribution version  is  "$DISTVER" "  "info"
@@ -335,6 +383,14 @@ if [ "$SMB3" -eq 1 ]; then
 
 fi
 
+## adding cifs-utils check. 
+
+if ! -f /sbin/mount.cifs ; then 
+  print_log "Cifs-utils module is not installed on this client, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#prerequisities-for-mounting-an-azure-file-share-with-linux-and-the-cifs-utils-package for more information" "error"
+  exit 2
+
+fi
+
 
 
 ## ==============================map drive for user, start tcpdump in background.=======================================
@@ -353,7 +409,7 @@ enable_log()
  if [ -f "$TCPLOG" ] ; then
    rm -f "$TCPLOG"
  fi
- command="tcpdump -i any port 445  -w ""$TCPLOG"" &"
+ command="tcpdump -i any port 445  -w ""$TCPLOG"" >/dev/null 2>&1 &"
  sudo sh -c  "$command"
  command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI"
  sudo sh -c  "$command"
