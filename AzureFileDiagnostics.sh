@@ -301,6 +301,7 @@ print_log " storage account FQDN is "$SAFQDN"" "info"
 
 if [ -n "$SAFQDN" ] ; then
 
+   sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-before.txt"
    ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.
    command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
 
@@ -311,6 +312,11 @@ if [ -n "$SAFQDN" ] ; then
      print_log "Port 445 is reachable from this client." "info"
    else
      print_log "Port 445 is not reachable from this client and the error is ""$RET"  "error"
+     sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-after.txt"
+     diff   "./$LOGDIR/firewall-before.txt"   "./$LOGDIR/firewall-after.txt"  
+     if [[ $? -gt 0 ]];then
+        print_log "Iptables has some rules dropping the packets when connecting to Azure Storage Account over TCP port 445." "warning"
+     fi
      exit 2
    fi
 fi
