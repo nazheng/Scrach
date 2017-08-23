@@ -200,6 +200,20 @@ else
 fi
 
 
+## Check if SMB2.1 is supported. According to https://wiki.samba.org/index.php/LinuxCIFSKernel, SMb2.1 is firstly added into Kernel at version 3.7.
+print_log "Check if client has SMB2.1 support"
+
+ver_lt "$KERVER" "3.7"
+
+if [ $? -eq 0 ]; then   
+   print_log "System DOES NOT support SMB2.1"  "error"
+   exit 2
+else
+   print_log "System supports SMB2.1" "info"
+fi
+
+
+
 ##  Check if SMB3 encryption is supported.
 print_log "Check if client has SMB Encryption support " 
 
