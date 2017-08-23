@@ -316,7 +316,7 @@ if [ ! -f "$xmlfile" ]; then
 
 #get the download file path
 curl -o "./""$LOGDIR""download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
-RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
+RET=$(cat "./""$LOGDIR""download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
 #download the file into local file
@@ -325,7 +325,7 @@ curl -o "./""$LOGDIR""$xmlfile" -s "$RET"
 
 fi
 
-RET=$(cat "$xmlfile" | awk -v ipaddr="$1" '
+RET=$(cat "./""$LOGDIR""$xmlfile" | awk -v ipaddr="$1" '
 
 #function to verify if IP network address matches with the IP range
 function IpInRange(iprange, ipaddr)
