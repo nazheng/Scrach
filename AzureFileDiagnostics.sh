@@ -130,69 +130,11 @@ fi
 ver_gt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$1"; }
 ver_lt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$2"; }
 
-
-## Get IP range function
-get-ip-region()
-{
-
-  #constant file name
-xmlfile="azurepubliciprange.xml"
-
-if [ ! -f "$xmlfile" ]; then
-
-#get the download file path
-curl -o download.html -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
-RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
-
-
-#download the file into local file
-print_log 'Downloading Azure Public IP range XML file' "info"
-curl -o "$xmlfile" -s "$RET"
-
+print_log "Create a folder MSFileMountDiagLog to save the script output"
+LOGDIR="MSFileMountDiagLog"
+if [ ! -d "$LOGDIR" ]; then
+   mkdir "$LOGDIR"
 fi
-
-RET=$(cat "$xmlfile" | awk -v ipaddr="$1" '
-
-#function to verify if IP network address matches with the IP range
-function IpInRange(iprange, ipaddr)
-{
-
- #printf "Checking IP address %s in IP Range %s\n", ipaddr, iprange
-
- split(iprange, a, "/")
-
- subnetaddr=a[1]
- cidrlen=a[2]
-
- tmp=32-cidrlen
- ipmax=lshift(1,32)-1
- mask=and((compl(lshift(1,tmp)-1)),ipmax)
-
- split(ipaddr, b, ".")
- ipnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
-
- split(subnetaddr, b, ".")
- subnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
-
-
- ipnet=and(ipnetdec, mask)
- subnet=and(subnetdec,mask)
-
- return (subnet == ipnet)
-}
-
-BEGIN{ region = "" }
-
-/Region Name/ { split($0, a, "\""); region=a[2]}
-
-/IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
-
-')
-
-IPREGION="$RET"
-
-}
-
 
 ## Verify Linux distribution version. There is a list of recommended images for use
 DISTNAME=''
@@ -363,6 +305,69 @@ fi
 ## Verify  IP region if SMB encrytion is not supported.
 if [ "$SMB3" -eq 1 ]; then
 
+## Get IP range function
+get-ip-region()
+{
+
+  #constant file name
+xmlfile="azurepubliciprange.xml"
+
+if [ ! -f "$xmlfile" ]; then
+
+#get the download file path
+curl -o "./""$LOGDIR""download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
+
+
+#download the file into local file
+print_log 'Downloading Azure Public IP range XML file' "info"
+curl -o "./""$LOGDIR""$xmlfile" -s "$RET"
+
+fi
+
+RET=$(cat "$xmlfile" | awk -v ipaddr="$1" '
+
+#function to verify if IP network address matches with the IP range
+function IpInRange(iprange, ipaddr)
+{
+
+ #printf "Checking IP address %s in IP Range %s\n", ipaddr, iprange
+
+ split(iprange, a, "/")
+
+ subnetaddr=a[1]
+ cidrlen=a[2]
+
+ tmp=32-cidrlen
+ ipmax=lshift(1,32)-1
+ mask=and((compl(lshift(1,tmp)-1)),ipmax)
+
+ split(ipaddr, b, ".")
+ ipnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
+
+ split(subnetaddr, b, ".")
+ subnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
+
+
+ ipnet=and(ipnetdec, mask)
+ subnet=and(subnetdec,mask)
+
+ return (subnet == ipnet)
+}
+
+BEGIN{ region = "" }
+
+/Region Name/ { split($0, a, "\""); region=a[2]}
+
+/IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
+
+')
+
+IPREGION="$RET"
+
+}
+
+
   print_log "Client does not support SMB Encyrption, verify if client is in the same region as Stoage Account" 
   DHCP25=''
   PIP=''
@@ -404,12 +409,6 @@ fi
 ## Function to Enable  CIFS debug logs including packet trace and CIFS kernel debug trace. 
 enable_log()
 {
-
- LOGDIR="MSFileMountDiagLog"
-
- if [ ! -d "$LOGDIR" ]; then
-   mkdir "$LOGDIR"
- fi
 
  TCPLOG="./""$LOGDIR""/packet.cap"
  if [ -f "$TCPLOG" ] ; then
