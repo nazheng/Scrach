@@ -312,20 +312,20 @@ get-ip-region()
   #constant file name
 xmlfile="azurepubliciprange.xml"
 
-if [ ! -f "$xmlfile" ]; then
+if [ ! -f "./$LOGDIR/$xmlfile" ]; then
 
 #get the download file path
-curl -o "./""$LOGDIR""download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
-RET=$(cat "./""$LOGDIR""download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
+curl -o "./$LOGDIR/download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
 #download the file into local file
 print_log 'Downloading Azure Public IP range XML file' "info"
-curl -o "./""$LOGDIR""$xmlfile" -s "$RET"
+curl -o "./$LOGDIR/$xmlfile" -s "$RET"
 
 fi
 
-RET=$(cat "./""$LOGDIR""$xmlfile" | awk -v ipaddr="$1" '
+RET=$(cat "./$LOGDIR/$xmlfile" | awk -v ipaddr="$1" '
 
 #function to verify if IP network address matches with the IP range
 function IpInRange(iprange, ipaddr)
