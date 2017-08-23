@@ -16,16 +16,16 @@ print_log()
 
 case  "$2" in
 info)
-  echo '[RUNNNG]--------' "${1}"
+  echo '[RUNNNG] -------' "${1}"
    ;;
 warning)
   echo '[WARNING]-------' "${1}"
    ;;
 error)
-  echo '[ERROR]---------' "${1}"
+  echo '[ERROR]  -------' "${1}"
    ;;
 *)
-  echo '[RUNNNG]--------' "${1}"
+  echo '[RUNNNG] +++++++' "${1}"
    ;;
 esac
 
@@ -146,7 +146,7 @@ RET=$(cat download.html | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\
 
 
 #download the file into local file
-print_log '+++ downloading Azure Public IP range XML file' "info"
+print_log 'Downloading Azure Public IP range XML file' "info"
 curl -o "$xmlfile" -s "$RET"
 
 fi
@@ -194,103 +194,112 @@ IPREGION="$RET"
 }
 
 
-## verify the SMB Encrption support. 
-print_log "Verify SMB Encryption support " "info"
-
+## Verify Linux distribution version. There is a list of recommended images for use
 DISTNAME=''
 DISTVER=''
 KERVER=''
 
-DISTNAME=$(cat /etc/*release | grep \\bNAME=)
+DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
 DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
-#DISTNAME=$(uname -a | grep -o -i ubuntu)
 KERVER=$(uname -r | cut -d - -f 1)
+
+print_log "Running on Linux Distribution $DISTNAME version $DISTVER, kernel version is $KERVER" 
 
 case $DISTNAME  in
  *Redhat* ) 
-  if ( ver_lt $DISTVER '7.0' ); then 
-    print_log "The linux client distribution name is $DISTNAME that should have 7.0" "error"
-    exit 2
+  if ( ver_lt $DISTVER '7' ); then 
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
   fi
   ;;
  *CentOS* )
-  if ( ver_lt $DISTVER '7.0' ); then
-    print_log "The linux client distribution name is $DISTNAME that should have 7.0" "error"
-    exit 2
+  if ( ver_lt $DISTVER '7' ); then
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+
   fi
   ;;
 
  *Ubuntu* ) 
   if ( ver_lt $DISTVER '14.04' ); then
-    print_log "The linux client distribution name is $DISTNAME that should have 14.04" "error"
-    exit 2
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+
   fi
   ;;
 
  *openSUSE* ) 
   if ( ver_l $DISTVER '13.2' ); then
-    print_log "The linux client distribution name is $DISTNAME that should have 13.2" "error"
-    exit 2
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+
   fi
   ;;
  *SLES* )  
-  if ( ver_l $DISTVER '12.0' ); then
-    print_log "The linux client distribution name is $DISTNAME that should have 12.0" "error"
-    exit 2
+  if ( ver_l $DISTVER '12' ); then
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+
   fi
   ;;
 
  *Debian* )
-  if ( ver_l $DISTVER '8.0' ); then
-    print_log "The linux client distribution name is $DISTNAME that should have 8.0" "error"
-    exit 2
+  if ( ver_l $DISTVER '8' ); then
+    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+
   fi
   ;;
-
 esac
 
 
 
+## Check if cifs-utils is installed 
+print_log "Check if cifs-utils is installed" 
+if [[ ! -f /sbin/mount.cifs ]]; then 
+  print_log "Cifs-utils module is not installed on this client, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#prerequisities-for-mounting-an-azure-file-share-with-linux-and-the-cifs-utils-package for more information" "error"
+  exit 2
+else
+  print_log  "cifs-utils is already installed on this client" "info"
+fi
+
+
+##  Check if SMB3 encryption is supported.
+print_log "Check if client has SMB Encryption support " 
+
+echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
+
 ## Ubuntu OS checks the distribution version
-if [[ echo "$DISTNAME" | grep Ubuntu ]]; then
+if [ $? -eq 0 ] ; then
 
- DISTVER=$(lsb_release -d | grep -o \\b[0-9\\.]\\+\\b)
- print_log  "Ubuntu distribution version  is  "$DISTVER" "  "info"
  ver_lt "$DISTVER" "16.04"
-
-
  if [ $? -eq 0 ] ; then
-   print_log "system DOES NOT support SMB Encryption"  "warning"
+   print_log "System DOES NOT support SMB Encryption" "warning"
    SMB3=0
  else
-   print_log "system supports SMB Encryption" "info"
+   print_log "System supports SMB Encryption" "info"
    SMB3=1
  fi
 
 ## Other distributions check kernel versions. 
 else
 
- print_log  "Linux kernel version is  "$KERVER" "  "info"
- ver_lt "$KERVER" "4.11.0"
+ ver_lt "$KERVER" "4.11"
 
  if [ $? -eq 0 ]; then   
-   print_log "system DOES NOT support SMB Encryption"  "warning"
+   print_log "System DOES NOT support SMB Encryption"  "warning"
    SMB3=1
  else
-   print_log "system supports SMB Encryption" "info"
+   print_log "System supports SMB Encryption" "info"
    SMB3=0
  fi
 fi
 
 
 ## Check if system has fix for known idle timeout/reconnect issues, not terminate error though. 
-if  ( ver_gt "$KERVER"  "4.9.1" ) || ( ( ver_gt "$KERVER"  "4.8.15" ) &&  ( ver_lt "KEVER" "4.9.0" ) ) || ( ( ver_gt "$KERVER"  "4.4.39" )  &&  ( ver_lt "KEVER" "4.5.0") )  ; then
+print_log "Check if client has been patched with the recommended kernel update for idle timeout issue" 
+if  ( ver_gt "$KERVER"  "4.9" ) || ( ( ver_gt "$KERVER"  "4.8.15" ) &&  ( ver_lt "KEVER" "4.9" ) ) || ( ( ver_gt "$KERVER"  "4.4.39" )  &&  ( ver_lt "KEVER" "4.5") )  ; then
  print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
 else
  print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
 fi
 
 ## Prompt user for UNC path if no options are provided.
+print_log "Check if client has any connectivity issue with storage account"
 if  [ -z "$SAFQDN" ]; then
   print_log "type the storage account name, followed by [ENTER]:"  'info'
   read ACCOUNT
@@ -340,7 +349,7 @@ if [ -n "$SAFQDN" ] ; then
    command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
 
 
-   echo "$RET" | grep -i succeeded 
+   echo "$RET" | grep -i succeeded  >/dev/null 2>&1
 
    if [ "$?" -eq  0 ] ; then
      print_log "Port 445 is reachable from this client." "info"
@@ -350,8 +359,11 @@ if [ -n "$SAFQDN" ] ; then
    fi
 fi
 
+
 ## Verify  IP region if SMB encrytion is not supported.
 if [ "$SMB3" -eq 1 ]; then
+
+  print_log "Client does not support SMB Encyrption, verify if client is in the same region as Stoage Account" 
   DHCP25=''
   PIP=''
   SAIP=''
@@ -378,16 +390,10 @@ if [ "$SMB3" -eq 1 ]; then
        print_log "Azure VM region mismatches with Storage Account Region, Please make sure Azure VM is in the same region as storage account. More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux " "error"
        exit 2
      fi
-
+  else
+     pring_log "Client is not Azure VM in the region as Storage account, mount will fail, More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux" "error"
+     exit 2
   fi
-
-fi
-
-## adding cifs-utils check. 
-
-if ! -f /sbin/mount.cifs ; then 
-  print_log "Cifs-utils module is not installed on this client, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#prerequisities-for-mounting-an-azure-file-share-with-linux-and-the-cifs-utils-package for more information" "error"
-  exit 2
 
 fi
 
@@ -427,6 +433,27 @@ disable_log()
  CIFSLOG="./""$LOGDIR""/cifs.txt" 
  cp /var/log/kern.log  "$CIFSLOG"
 }
+
+
+## Prompt user to select if he wants to map drive or not.
+
+print_log "Script has validated the client settings and do you want to map drive by script?"
+options=("yes" "no")
+
+  select opt in "${options[@]}"
+  do
+    case $opt in
+        yes)
+            #comform to BASH, 0 means true.
+            break
+            ;;
+        no)
+            exit 0
+            ;;
+        *) echo please type yes or no;;
+    esac
+  done
+
 
 ## Prompt user to select diagnostics option
 print_log "Do you want to tun on diagnostics logs"
