@@ -143,8 +143,11 @@ DISTNAME=''
 DISTVER=''
 KERVER=''
 
-DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
-DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
+command -v lsb_release >/dev/null 2>&1  && DISTNAME=$(lsb_release -i) || DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
+command -v lsb_release >/dev/null 2>&1  && DISTNAME=$(lsb_release -r |  grep -o  [0-9\\.]\\+)  ||  $(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
+
+#DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
+#DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
 
 print_log "Running on Linux Distribution $DISTNAME version $DISTVER, kernel version is $KERVER" 
