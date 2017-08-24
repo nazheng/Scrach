@@ -300,13 +300,16 @@ if  [ -z "$SAFQDN" ]; then
   UNCPATH="//""$SAFQDN""/""$SHARE"
 fi
 
-print_log " storage account FQDN is "$SAFQDN"" "info"
+print_log "Storage account FQDN is "$SAFQDN"" "info"
 
 ## Verify port 445 reachability.
 
 if [ -n "$SAFQDN" ] ; then
-
+  
+  print_log "Getting the Iptables policies"  "info"
   sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-before.txt"
+
+  print_log "Test the storage account IP connectivity over TCP port 445"
   ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.
   command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
 
@@ -462,7 +465,7 @@ disable_log()
 
   command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
   sudo sh -c  "$command"
-  dmesg > $CIFSLOG
+  dmesg -T > $CIFSLOG
 }
 
 
