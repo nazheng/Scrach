@@ -25,7 +25,9 @@ error)
   echo '[ERROR]  -------' "${1}"
    ;;
 *)
-  echo '[RUNNNG] +++++++' "${1}"
+echo  
+echo '[RUNNNG] +++++++' "${1}"
+  
    ;;
 esac
 
@@ -196,7 +198,7 @@ if [[ ! -f /sbin/mount.cifs ]]; then
   print_log "Cifs-utils module is not installed on this client, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#prerequisities-for-mounting-an-azure-file-share-with-linux-and-the-cifs-utils-package for more information" "error"
   exit 2
 else
-  print_log  "cifs-utils is already installed on this client" "info"
+  print_log  "Cifs-utils is already installed on this client" "info"
 fi
 
 
@@ -257,13 +259,13 @@ fi
 ## Prompt user for UNC path if no options are provided.
 print_log "Check if client has any connectivity issue with storage account"
 if  [ -z "$SAFQDN" ]; then
-  print_log "type the storage account name, followed by [ENTER]:"  'info'
+  print_log "Type the storage account name, followed by [ENTER]:"  'info'
   read ACCOUNT
 
-  print_log "type the share path, followed by [ENTER]:" "info"
+  print_log "Type the share path, followed by [ENTER]:" "info"
   read SHARE
 
-  print_log "choose the Azure Environment:"  "info"
+  print_log "Choose the Azure Environment:"  "info"
   PS3='Please enter your choice: '
   SUFFIX=''
   ## SH points to /bib/dash on ubuntu system, but dash does not support array/select. 
@@ -405,7 +407,7 @@ IPREGION="$RET"
   ClientIPRegion="$IPREGION"
 
   if (  [  "$DHCP245" -eq 0 ]  || [  "$ClientIPRegion" != '' ] ); then
-     print_log "client is Azure VM and running in region ""$ClientIPRegion" "info"
+     print_log "Client is Azure VM and running in region ""$ClientIPRegion" "info"
 
      SAIP=$(dig +short "$SAFQDN" | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
      get-ip-region "$SAIP"
@@ -434,9 +436,16 @@ enable_log()
  if [ -f "$TCPLOG" ] ; then
    rm -f "$TCPLOG"
  fi
+ CIFSLOG="./""$LOGDIR""/cifs.txt"
+
+ if [ -f "$CIFSLOG" ] ; then
+   rm -f "$CIFSLOG"
+ fi
+
+
  command="tcpdump -i any port 445  -w ""$TCPLOG"" >/dev/null 2>&1 &"
  sudo sh -c  "$command"
- command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI"
+ command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI "
  sudo sh -c  "$command"
 }
 
@@ -449,7 +458,6 @@ disable_log()
 
  command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
  sudo sh -c  "$command"
- CIFSLOG="./""$LOGDIR""/cifs.txt" 
  dmesg > $CIFSLOG
 }
 
@@ -508,8 +516,10 @@ if [ ! -d "$mountpoint" ] ;then
   mkdir "$mountpoint"
 fi
 
-print_log "type the storage account access key, followed by [ENTER]:" "info"
+print_log "Type the storage account access key, followed by [ENTER]:" "info"
 read password
+
+password='$password'
 
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
 
@@ -519,6 +529,7 @@ sleep 1
 
 if [ "$DIAGON" -eq 0 ]; then
    disable_log
+   print_log "Packet trace/CIFS debugging logs can be found in MSFileMountDiagLog folder" "info"
 fi
 
 
