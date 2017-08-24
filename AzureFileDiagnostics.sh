@@ -422,7 +422,7 @@ BEGIN{ region = "" }
       exit 2
     fi
   else
-    pring_log "Client is not Azure VM in the region as Storage account, mount will fail, More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux" "error"
+    print_log "Client is not Azure VM in the region as Storage account, mount will fail, More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux" "error"
     exit 2
   fi
 
