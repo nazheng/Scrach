@@ -404,7 +404,7 @@ BEGIN{ region = "" }
   grep -q unknown-245 /var/lib/dhcp/dhclient.eth0.leases  2&>1
   DHCP245=$?
 
-  PIP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+  command -v dig >/dev/null 2>&1  &&  PIP=$(dig +short myip.opendns.com @resolver1.opendns.com) || PIP=$(host -t a myip.opendns.com resolver1.opendns.com 2>&1  | grep 'has address' | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
   get-ip-region "$PIP"
 
   ClientIPRegion="$IPREGION"
@@ -412,10 +412,11 @@ BEGIN{ region = "" }
   if (  [  "$DHCP245" -eq 0 ]  || [  "$ClientIPRegion" != '' ] ); then
     print_log "Client is Azure VM and running in region ""$ClientIPRegion" "info"
 
-    SAIP=$(dig +short "$SAFQDN" | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
+    command -v dig >/dev/null 2>&1  &&  SAIP=$(dig +short "$SAFQDN") || SAIP=$(host -t a "$SAFQDN"  2>&1  | grep 'has address' | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
     get-ip-region "$SAIP"
+
     SARegion="$IPREGION"
-    print_log "storage account region is ""$SARegion" "info"
+    print_log "Storage account region is ""$SARegion" "info"
     if [ "$SARegion" != "$ClientIPRegion" ] ; then
       print_log "Azure VM region mismatches with Storage Account Region, Please make sure Azure VM is in the same region as storage account. More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux " "error"
       exit 2
