@@ -14,22 +14,22 @@ IPREGION=''
 print_log()
 {
 
-case  "$2" in
-info)
-  echo '[RUNNNG] -------' "${1}"
-   ;;
-warning)
-  echo '[WARNING]-------' "${1}"
-   ;;
-error)
-  echo '[ERROR]  -------' "${1}"
-   ;;
-*)
-echo  
-echo '[RUNNNG] +++++++' "${1}"
-  
-   ;;
-esac
+  case  "$2" in
+    info)
+      echo '[RUNNNG] -------' "${1}"
+      ;;
+    warning)
+      echo '[WARNING]-------' "${1}"
+      ;;
+    error)
+      echo '[ERROR]  -------' "${1}"
+      ;;
+    *)
+      echo
+      echo '[RUNNNG] +++++++' "${1}"
+
+      ;;
+  esac
 
 }
 
@@ -39,103 +39,103 @@ esac
 ## script usage function
 usage()
 {
-    echo "options below are optional"
-    echo '-u | --uncpath <value> Specify Azure File share UNC path like \\storageaccount.file.core.windows.net\sharename. if this option is provided, below options are ignored'
-    echo '-a | --account <value> Specify Storage Account Name'
-    echo '-s | --share <value >Specify the file share name'
-    echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureGermanCloud, AzureUSGovernment. The default is AzureCloud'
+  echo "options below are optional"
+  echo '-u | --uncpath <value> Specify Azure File share UNC path like \\storageaccount.file.core.windows.net\sharename. if this option is provided, below options are ignored'
+  echo '-a | --account <value> Specify Storage Account Name'
+  echo '-s | --share <value >Specify the file share name'
+  echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureGermanCloud, AzureUSGovernment. The default is AzureCloud'
 }
 
 
-## When invoking script by sh, it would have syntax error. it happens becuase, by default on ubunntu /bin/sh is mapped to DASH which has many constraints on scripting (e.g. DASH does not support array or select). 
-## BASH is still default SHELL for SSH. Force to use bash  SHELL now. it does not appear to  impact user expereince a lot. 
+## When invoking script by sh, it would have syntax error. it happens becuase, by default on ubunntu /bin/sh is mapped to DASH which has many constraints on scripting (e.g. DASH does not support array or select).
+## BASH is still default SHELL for SSH. Force to use bash  SHELL now. it does not appear to  impact user expereince a lot.
 if [ -z $BASH_VERSION ]; then
-   print_log "current SHELL is not BASH. please use bash to run this script" "error"
-   exit 1
+  print_log "current SHELL is not BASH. please use bash to run this script" "error"
+  exit 1
 fi
 
-##  argument # is zero which means user does not specify argument to run the script. 
+##  argument # is zero which means user does not specify argument to run the script.
 if [ $# -gt 0 ] ; then
 
 
- ## Detect if system has enhanced getopt
- NEWGETOPT=false
- getopt -T >/dev/null
+  ## Detect if system has enhanced getopt
+  NEWGETOPT=false
+  getopt -T >/dev/null
 
- if [ $? -eq 4 ]; then
+  if [ $? -eq 4 ]; then
     NEWGETOPT=true
- fi
+  fi
 
- SHORT_OPTS=u:a:s:e:h
- LONG_OPTS=uncpath:,storageaccount:,share:,azureenvironment:,help
+  SHORT_OPTS=u:a:s:e:h
+  LONG_OPTS=uncpath:,storageaccount:,share:,azureenvironment:,help
 
- ## Use getopt to sanitize the arguments first.
- if [ "$NEWGETOPT" ]; then
-   ARGS=`getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@"`
- else
-   ARGS=`getopt $SHORT_OPTS "$@"`
- fi
+  ## Use getopt to sanitize the arguments first.
+  if [ "$NEWGETOPT" ]; then
+    ARGS=`getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@"`
+  else
+    ARGS=`getopt $SHORT_OPTS "$@"`
+  fi
 
- if [ $? != 0 ] ; then
-     echo "Usage error (use -h or --help for help)"
-     exit 2
- fi
+  if [ $? != 0 ] ; then
+    echo "Usage error (use -h or --help for help)"
+    exit 2
+  fi
 
- eval set -- $ARGS
- 
- ## Process parsed options
- echo "$@"
- while [ $# -gt 0 ]; do
+  eval set -- $ARGS
+
+  ## Process parsed options
+  echo "$@"
+  while [ $# -gt 0 ]; do
     case "$1" in
-        -u | --uncpath)   UNCPATH="$2"; shift;;
-        -a | --account)  ACCOUNT="$2"; shift;;
-        -s | --share)  SHARE="$2"; shift;;
-        -e | --azureenvironment)  ENVIRONMENT="$2"; shift;;
-        -h | --help)
-         usage
-         exit 0;;
-        esac
+      -u | --uncpath)   UNCPATH="$2"; shift;;
+      -a | --account)  ACCOUNT="$2"; shift;;
+      -s | --share)  SHARE="$2"; shift;;
+      -e | --azureenvironment)  ENVIRONMENT="$2"; shift;;
+      -h | --help)
+        usage
+      exit 0;;
+    esac
     shift
- done
+  done
 
- ## make sure required options are specified.
- if ( [ -n "$UNCPATH" ] ); then
-  print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
-  UNCPATH=$(echo "$UNCPATH" | sed    's/\\/\//g')
-  SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' ) 
+  ## make sure required options are specified.
+  if ( [ -n "$UNCPATH" ] ); then
+    print_log  "UNC path option is specified, other options will be ignored (use -h or --help for help)" "warning"
+    UNCPATH=$(echo "$UNCPATH" | sed    's/\\/\//g')
+    SAFQDN=$(echo "$UNCPATH" | sed 's/[\/\\]/ /g' | awk '{print $1}' )
 
- elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
+  elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
 
-  print_log  "Form the UNC path based on the options specified" "info"
+    print_log  "Form the UNC path based on the options specified" "info"
 
-  SUFFIX=''
-  case "$ENVIRONMENT" in 
-     azurecloud) SUFFIX='.file.core.windows.net' ;;
-     azurechinacloud) SUFFIX='.file.core.chinacloudapi.cn' ;;
-     azureusgovernment) SUFFIX='.file.usgovcloudapi.net' ;;
-     AzureGermanCloud) SUFFIX='.file.core.cloudapi.de' ;;
-  esac
-  SAFQDN="$ACCOUNT""$SUFFIX"
-  UNCPATH="//""$SAFQDN""/""$SHARE"
+    SUFFIX=''
+    case "$ENVIRONMENT" in
+      azurecloud) SUFFIX='.file.core.windows.net' ;;
+      azurechinacloud) SUFFIX='.file.core.chinacloudapi.cn' ;;
+      azureusgovernment) SUFFIX='.file.usgovcloudapi.net' ;;
+      AzureGermanCloud) SUFFIX='.file.core.cloudapi.de' ;;
+    esac
+    SAFQDN="$ACCOUNT""$SUFFIX"
+    UNCPATH="//""$SAFQDN""/""$SHARE"
 
- else
-  print_log  "$PROG: missing options (use -h or --help for help)"  "error"
-  exit 2
- fi
+  else
+    print_log  "$PROG: missing options (use -h or --help for help)"  "error"
+    exit 2
+  fi
 
 fi
 
 
 ## ================================Client Side Environment validation =======================================
 
-## simple function to compare version,echo has different implementatoin in SHELL, use printf to avoid compatability issue. 
+## simple function to compare version,echo has different implementatoin in SHELL, use printf to avoid compatability issue.
 ver_gt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$1"; }
 ver_lt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$2"; }
 
 print_log "Create a folder MSFileMountDiagLog to save the script output"
 LOGDIR="MSFileMountDiagLog"
 if [ ! -d "$LOGDIR" ]; then
-   mkdir "$LOGDIR"
+  mkdir "$LOGDIR"
 fi
 
 ## Verify Linux distribution version. There is a list of recommended images for use
@@ -150,54 +150,54 @@ command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
 
-print_log "Running on Linux Distribution $DISTNAME version $DISTVER, kernel version is $KERVER" 
+print_log "Running on Linux Distribution $DISTNAME version $DISTVER, kernel version is $KERVER"
 
 case $DISTNAME  in
- *Redhat* ) 
-  if ( ver_lt $DISTVER '7' ); then 
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
-  fi
-  ;;
- *CentOS* )
-  if ( ver_lt $DISTVER '7' ); then
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+  *Redhat* )
+    if ( ver_lt $DISTVER '7' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+    fi
+    ;;
+  *CentOS* )
+    if ( ver_lt $DISTVER '7' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
-  fi
-  ;;
+    fi
+    ;;
 
- *Ubuntu* ) 
-  if ( ver_lt $DISTVER '14.04' ); then
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+  *Ubuntu* )
+    if ( ver_lt $DISTVER '14.04' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
-  fi
-  ;;
+    fi
+    ;;
 
- *openSUSE* ) 
-  if ( ver_l $DISTVER '13.2' ); then
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+  *openSUSE* )
+    if ( ver_l $DISTVER '13.2' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
-  fi
-  ;;
- *SLES* )  
-  if ( ver_l $DISTVER '12' ); then
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+    fi
+    ;;
+  *SLES* )
+    if ( ver_l $DISTVER '12' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
-  fi
-  ;;
+    fi
+    ;;
 
- *Debian* )
-  if ( ver_l $DISTVER '8' ); then
-    print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
+  *Debian* )
+    if ( ver_l $DISTVER '8' ); then
+      print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
-  fi
-  ;;
+    fi
+    ;;
 esac
 
 
 
-## Check if cifs-utils is installed 
-print_log "Check if cifs-utils is installed" 
-if [[ ! -f /sbin/mount.cifs ]]; then 
+## Check if cifs-utils is installed
+print_log "Check if cifs-utils is installed"
+if [[ ! -f /sbin/mount.cifs ]]; then
   print_log "Cifs-utils module is not installed on this client, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#prerequisities-for-mounting-an-azure-file-share-with-linux-and-the-cifs-utils-package for more information" "error"
   exit 2
 else
@@ -210,53 +210,53 @@ print_log "Check if client has SMB2.1 support"
 
 ver_lt "$KERVER" "3.7"
 
-if [ $? -eq 0 ]; then   
-   print_log "System DOES NOT support SMB2.1"  "error"
-   exit 2
+if [ $? -eq 0 ]; then
+  print_log "System DOES NOT support SMB2.1"  "error"
+  exit 2
 else
-   print_log "System supports SMB2.1" "info"
+  print_log "System supports SMB2.1" "info"
 fi
 
 
 
 ##  Check if SMB3 encryption is supported.
-print_log "Check if client has SMB Encryption support " 
+print_log "Check if client has SMB Encryption support "
 
 echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
 
 ## Ubuntu OS checks the distribution version
 if [ $? -eq 0 ] ; then
 
- ver_lt "$DISTVER" "16.04"
- if [ $? -eq 0 ] ; then
-   print_log "System DOES NOT support SMB Encryption" "warning"
-   SMB3=0
- else
-   print_log "System supports SMB Encryption" "info"
-   SMB3=1
- fi
+  ver_lt "$DISTVER" "16.04"
+  if [ $? -eq 0 ] ; then
+    print_log "System DOES NOT support SMB Encryption" "warning"
+    SMB3=0
+  else
+    print_log "System supports SMB Encryption" "info"
+    SMB3=1
+  fi
 
-## Other distributions check kernel versions. 
+## Other distributions check kernel versions.
 else
 
- ver_lt "$KERVER" "4.11"
+  ver_lt "$KERVER" "4.11"
 
- if [ $? -eq 0 ]; then   
-   print_log "System DOES NOT support SMB Encryption"  "warning"
-   SMB3=1
- else
-   print_log "System supports SMB Encryption" "info"
-   SMB3=0
- fi
+  if [ $? -eq 0 ]; then
+    print_log "System DOES NOT support SMB Encryption"  "warning"
+    SMB3=1
+  else
+    print_log "System supports SMB Encryption" "info"
+    SMB3=0
+  fi
 fi
 
 
-## Check if system has fix for known idle timeout/reconnect issues, not terminate error though. 
-print_log "Check if client has been patched with the recommended kernel update for idle timeout issue" 
+## Check if system has fix for known idle timeout/reconnect issues, not terminate error though.
+print_log "Check if client has been patched with the recommended kernel update for idle timeout issue"
 if  ( ver_gt "$KERVER"  "4.9" ) || ( ( ver_gt "$KERVER"  "4.8.15" ) &&  ( ver_lt "KEVER" "4.9" ) ) || ( ( ver_gt "$KERVER"  "4.4.39" )  &&  ( ver_lt "KEVER" "4.5") )  ; then
- print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
+  print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
 else
- print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
+  print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
 fi
 
 ## Prompt user for UNC path if no options are provided.
@@ -271,29 +271,29 @@ if  [ -z "$SAFQDN" ]; then
   print_log "Choose the Azure Environment:"  "info"
   PS3='Please enter your choice: '
   SUFFIX=''
-  ## SH points to /bib/dash on ubuntu system, but dash does not support array/select. 
+  ## SH points to /bib/dash on ubuntu system, but dash does not support array/select.
   options=('azurecloud' 'azurechinacloud' 'azuregermancloud' 'azureusgovernment')
 
   select opt in "${options[@]}"
   do
     case $opt in
-        "azurecloud")
-            SUFFIX=".file.core.windows.net"
-            break
-            ;;
-        "azurechinacloud")
-            SUFFIX=".file.core.chinacloudapi.cn"
-            break
-            ;;
-        "azuregermancloud")
-            SUFFIX=".file.core.cloudapi.de"
-            break
-            ;;
-        "azureusgovernment")
-           SUFFIX=".file.usgovcloudapi.net"
-           break
-            ;;
-        *) echo invalid option;;
+      "azurecloud")
+        SUFFIX=".file.core.windows.net"
+        break
+        ;;
+      "azurechinacloud")
+        SUFFIX=".file.core.chinacloudapi.cn"
+        break
+        ;;
+      "azuregermancloud")
+        SUFFIX=".file.core.cloudapi.de"
+        break
+        ;;
+      "azureusgovernment")
+        SUFFIX=".file.usgovcloudapi.net"
+        break
+        ;;
+      *) echo invalid option;;
     esac
   done
   SAFQDN="$ACCOUNT""$SUFFIX"
@@ -302,28 +302,28 @@ fi
 
 print_log " storage account FQDN is "$SAFQDN"" "info"
 
-## Verify port 445 reachability. 
+## Verify port 445 reachability.
 
 if [ -n "$SAFQDN" ] ; then
 
-   sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-before.txt"
-   ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.
-   command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
+  sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-before.txt"
+  ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.
+  command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
 
 
-   echo "$RET" | grep -i succeeded  >/dev/null 2>&1
+  echo "$RET" | grep -i succeeded  >/dev/null 2>&1
 
-   if [ "$?" -eq  0 ] ; then
-     print_log "Port 445 is reachable from this client." "info"
-   else
-     print_log "Port 445 is not reachable from this client and the error is ""$RET"  "error"
-     sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-after.txt"
-     diff   "./$LOGDIR/firewall-before.txt"   "./$LOGDIR/firewall-after.txt"  
-     if [[ $? -gt 0 ]];then
-        print_log "Iptables has some rules dropping the packets when connecting to Azure Storage Account over TCP port 445." "warning"
-     fi
-     exit 2
-   fi
+  if [ "$?" -eq  0 ] ; then
+    print_log "Port 445 is reachable from this client." "info"
+  else
+    print_log "Port 445 is not reachable from this client and the error is ""$RET"  "error"
+    sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-after.txt"
+    diff   "./$LOGDIR/firewall-before.txt"   "./$LOGDIR/firewall-after.txt"
+    if [[ $? -gt 0 ]];then
+      print_log "Iptables has some rules dropping the packets when connecting to Azure Storage Account over TCP port 445." "warning"
+    fi
+    exit 2
+  fi
 fi
 
 
@@ -331,26 +331,26 @@ fi
 if [ "$SMB3" -eq 1 ]; then
 
 ## Get IP range function
-get-ip-region()
-{
+  get-ip-region()
+  {
 
-  #constant file name
-xmlfile="azurepubliciprange.xml"
+    #constant file name
+    xmlfile="azurepubliciprange.xml"
 
-if [ ! -f "./$LOGDIR/$xmlfile" ]; then
+    if [ ! -f "./$LOGDIR/$xmlfile" ]; then
 
-#get the download file path
-curl -o "./$LOGDIR/download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
-RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
+    #get the download file path
+      curl -o "./$LOGDIR/download.html" -s https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+      RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
-#download the file into local file
-print_log 'Downloading Azure Public IP range XML file' "info"
-curl -o "./$LOGDIR/$xmlfile" -s "$RET"
+    #download the file into local file
+      print_log 'Downloading Azure Public IP range XML file' "info"
+      curl -o "./$LOGDIR/$xmlfile" -s "$RET"
 
-fi
+    fi
 
-RET=$(cat "./$LOGDIR/$xmlfile" | awk -v ipaddr="$1" '
+    RET=$(cat "./$LOGDIR/$xmlfile" | awk -v ipaddr="$1" '
 
 #function to verify if IP network address matches with the IP range
 function IpInRange(iprange, ipaddr)
@@ -386,21 +386,21 @@ BEGIN{ region = "" }
 
 /IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
 
-')
+    ')
 
-IPREGION="$RET"
+    IPREGION="$RET"
 
-}
+  }
 
 
-  print_log "Client does not support SMB Encyrption, verify if client is in the same region as Stoage Account" 
+  print_log "Client does not support SMB Encyrption, verify if client is in the same region as Stoage Account"
   DHCP25=''
   PIP=''
   SAIP=''
   ClientIPRegion=''
   SARegion=''
 
-  ## verify client is Azure VM or not. On untuntu DHCP lease option can be used to check it but Red Hat does not seem to support it. Use client IP too. 
+  ## verify client is Azure VM or not. On untuntu DHCP lease option can be used to check it but Red Hat does not seem to support it. Use client IP too.
   grep -q unknown-245 /var/lib/dhcp/dhclient.eth0.leases  2&>1
   DHCP245=$?
 
@@ -410,19 +410,19 @@ IPREGION="$RET"
   ClientIPRegion="$IPREGION"
 
   if (  [  "$DHCP245" -eq 0 ]  || [  "$ClientIPRegion" != '' ] ); then
-     print_log "Client is Azure VM and running in region ""$ClientIPRegion" "info"
+    print_log "Client is Azure VM and running in region ""$ClientIPRegion" "info"
 
-     SAIP=$(dig +short "$SAFQDN" | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
-     get-ip-region "$SAIP"
-     SARegion="$IPREGION"
-     print_log "storage account region is ""$SARegion" "info"
-     if [ "$SARegion" != "$ClientIPRegion" ] ; then
-       print_log "Azure VM region mismatches with Storage Account Region, Please make sure Azure VM is in the same region as storage account. More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux " "error"
-       exit 2
-     fi
+    SAIP=$(dig +short "$SAFQDN" | grep -o [0-9]\\+\.[0-9]\\+\.[0-9]\\+\.[0-9]\\+)
+    get-ip-region "$SAIP"
+    SARegion="$IPREGION"
+    print_log "storage account region is ""$SARegion" "info"
+    if [ "$SARegion" != "$ClientIPRegion" ] ; then
+      print_log "Azure VM region mismatches with Storage Account Region, Please make sure Azure VM is in the same region as storage account. More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux " "error"
+      exit 2
+    fi
   else
-     pring_log "Client is not Azure VM in the region as Storage account, mount will fail, More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux" "error"
-     exit 2
+    pring_log "Client is not Azure VM in the region as Storage account, mount will fail, More information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-how-to-use-files-linux" "error"
+    exit 2
   fi
 
 fi
@@ -431,37 +431,37 @@ fi
 
 ## ==============================map drive for user, start tcpdump in background.=======================================
 
-## Function to Enable  CIFS debug logs including packet trace and CIFS kernel debug trace. 
+## Function to Enable  CIFS debug logs including packet trace and CIFS kernel debug trace.
 enable_log()
 {
 
- TCPLOG="./""$LOGDIR""/packet.cap"
- if [ -f "$TCPLOG" ] ; then
-   rm -f "$TCPLOG"
- fi
- CIFSLOG="./""$LOGDIR""/cifs.txt"
+  TCPLOG="./""$LOGDIR""/packet.cap"
+  if [ -f "$TCPLOG" ] ; then
+    rm -f "$TCPLOG"
+  fi
+  CIFSLOG="./""$LOGDIR""/cifs.txt"
 
- if [ -f "$CIFSLOG" ] ; then
-   rm -f "$CIFSLOG"
- fi
+  if [ -f "$CIFSLOG" ] ; then
+    rm -f "$CIFSLOG"
+  fi
 
 
- command="tcpdump -i any port 445  -w ""$TCPLOG"" >/dev/null 2>&1 &"
- sudo sh -c  "$command"
- command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI "
- sudo sh -c  "$command"
+  command="tcpdump -i any port 445  -w ""$TCPLOG"" >/dev/null 2>&1 &"
+  sudo sh -c  "$command"
+  command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI "
+  sudo sh -c  "$command"
 }
 
 
 ## Function to disable logging.
 disable_log()
 {
- PID=$(sudo pgrep tcpdump)
- sudo kill "$PID"
+  PID=$(sudo pgrep tcpdump)
+  sudo kill "$PID"
 
- command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
- sudo sh -c  "$command"
- dmesg > $CIFSLOG
+  command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
+  sudo sh -c  "$command"
+  dmesg > $CIFSLOG
 }
 
 
@@ -470,19 +470,19 @@ disable_log()
 print_log "Script has validated the client settings and do you want to map drive by script?"
 options=("yes" "no")
 
-  select opt in "${options[@]}"
-  do
-    case $opt in
-        yes)
-            #comform to BASH, 0 means true.
-            break
-            ;;
-        no)
-            exit 0
-            ;;
-        *) echo please type yes or no;;
-    esac
-  done
+select opt in "${options[@]}"
+do
+  case $opt in
+    yes)
+      #comform to BASH, 0 means true.
+      break
+      ;;
+    no)
+      exit 0
+      ;;
+    *) echo please type yes or no;;
+  esac
+done
 
 
 ## Prompt user to select diagnostics option
@@ -490,28 +490,28 @@ print_log "Do you want to tun on diagnostics logs"
 
 options=("yes" "no")
 
-  select opt in "${options[@]}"
-  do
-    case $opt in
-        yes)
-	    #comform to BASH, 0 means true. 
-            DIAGON=0
-            break
-            ;;
-        no)
-            DIAGON=1
-            break
-            ;;
-        *) echo please type yes or no;;
-    esac
-  done
+select opt in "${options[@]}"
+do
+  case $opt in
+    yes)
+      #comform to BASH, 0 means true.
+      DIAGON=0
+      break
+      ;;
+    no)
+      DIAGON=1
+      break
+      ;;
+    *) echo please type yes or no;;
+  esac
+done
 
 if [ "$DIAGON" -eq 0 ]; then
-   enable_log  
+  enable_log
 fi
 
 
-## Prompt user to type the local mount point and storage account access key. 
+## Prompt user to type the local mount point and storage account access key.
 print_log "type the local mount point, followed by [ENTER]:" "info"
 read mountpoint
 
@@ -531,13 +531,9 @@ sudo sh -c "$command"
 sleep 1
 
 if [ "$DIAGON" -eq 0 ]; then
-   disable_log
-   print_log "Packet trace/CIFS debugging logs can be found in MSFileMountDiagLog folder" "info"
+  disable_log
+  print_log "Packet trace/CIFS debugging logs can be found in MSFileMountDiagLog folder" "info"
 fi
-
-
-
-
 
 
 
