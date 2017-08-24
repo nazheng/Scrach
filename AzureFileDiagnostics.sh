@@ -16,17 +16,17 @@ print_log()
 
   case  "$2" in
     info)
-      echo '[RUNNNG] -------' "${1}"
+      echo '[RUNNNG]--------' "${1}"
       ;;
     warning)
       echo '[WARNING]-------' "${1}"
       ;;
     error)
-      echo '[ERROR]  -------' "${1}"
+      echo '[ERROR]---------' "${1}"
       ;;
     *)
       echo
-      echo '[RUNNNG] +++++++' "${1}"
+      echo '[RUNNNG]++++++++' "${1}"
 
       ;;
   esac
