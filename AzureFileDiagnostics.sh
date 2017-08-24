@@ -342,8 +342,8 @@ if [ "$SMB3" -eq 1 ]; then
 
     if [ ! -f "./$LOGDIR/$xmlfile" ]; then
 
-    #get the download file path
-      wget -U firefox -qO  "./$LOGDIR/download.html"  https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+    #get the download file  link from the html file
+      wget -U firefox -qO  "./$LOGDIR/download.html"  "https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653"
       RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
