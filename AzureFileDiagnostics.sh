@@ -309,7 +309,7 @@ if [ -n "$SAFQDN" ] ; then
   print_log "Getting the Iptables policies"  "info"
   sudo iptables -vnxL | grep DROP >  "./$LOGDIR/firewall-before.txt"
 
-  print_log "Test the storage account IP connectivity over TCP port 445"
+  print_log "Test the storage account IP connectivity over TCP port 445" "info"
   ## Netcat is not instaled by default on Redhat/CentOS, so use native BASH command to test the port reachability.
   command -v nc >/dev/null 2>&1  &&  RET=$(netcat -v -z -w 5 "$SAFQDN"  445 2>&1) ||  timeout 5 bash -c "echo >/dev/tcp/$SAFQDN/445" && RET='succeeded' || RET="Connection Timeout or Error happens"
 
@@ -343,13 +343,13 @@ if [ "$SMB3" -eq 1 ]; then
     if [ ! -f "./$LOGDIR/$xmlfile" ]; then
 
     #get the download file path
-      wget -o "./$LOGDIR/download.html"  https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+      wget -U firefox -qO  "./$LOGDIR/download.html"  https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
       RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
     #download the file into local file
       print_log 'Downloading Azure Public IP range XML file' "info"
-      wget -o "./$LOGDIR/$xmlfile"  "$RET"
+      wget -U firefox -qO "./$LOGDIR/$xmlfile"  "$RET"
 
     fi
 
