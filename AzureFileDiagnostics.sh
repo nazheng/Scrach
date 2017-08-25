@@ -333,7 +333,7 @@ fi
 ## Verify  IP region if SMB encrytion is not supported.
 if [ "$SMB3" -eq 1 ]; then
 
-## Get IP range function
+  ## Get IP range function
   get-ip-region()
   {
 
@@ -350,50 +350,97 @@ if [ "$SMB3" -eq 1 ]; then
     #download the file into local file
       print_log 'Downloading Azure Public IP range XML file' "info"
       wget -U firefox -qO "./$LOGDIR/$xmlfile"  "$RET"
+    fi
+
+    
+    IPREGION=''
+    awk -V >/dev/null 2>&1 
+
+    if [[ $? -eq 0 ]]; then
+
+    IPREGION=$(cat "./$LOGDIR/$xmlfile"  | awk -v ipaddr="$1" '
+
+    #function to verify if IP network address matches with the IP range
+    function IpInRange(iprange, ipaddr)
+    {
+      split(iprange, a, "/")
+         subnetaddr=a[1]
+         cidrlen=a[2]
+
+         tmp=32-cidrlen
+         ipmax=lshift(1,32)-1
+         mask=and((compl(lshift(1,tmp)-1)),ipmax)
+
+         split(ipaddr, b, ".")
+         ipnetdec = (b[1] * 16777216) + (b[2] * 65536) + (b[3] * 256) + b[4]
+         ipnetdec = and(ipnetdec, mask)
+
+         split(subnetaddr, b, ".")
+         subnetdec = (b[1] * 16777216) + (b[2] * 65536) + (b[3] * 256) + b[4]
+
+         return (subnetdec == ipnetdec)
+     }
+     BEGIN{ region = "" }
+     /Region Name/ { split($0, a, "\""); region=a[2]}
+     /IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
+    ') 
+   
+    else
+
+      subnet=''
+      region==''
+      ipaddr="$1"
+
+
+	while IFS= read -r var
+ 	do
+	 if  [[ $var =~  'Region Name' ]]; then
+	  a=(${var//\"/ })
+	  region=${a[2]}
+	 fi
+
+	cidraddr=''
+
+	if [[ $var =~ 'IpRange Subnet' ]]; then
+	   a=(${var//\"/ })
+	   cidraddr=${a[2]}
+  
+	fi
+
+	if [[ -n "$cidraddr" ]]; then
+
+	 a=(${cidraddr/\// })
+	 subnet=${a[0]}
+	 cidrlen=${a[1]}
+	 let "tmp=1<<(32-$cidrlen), tmp--"
+	 let "fullone=1<<32 , fullone--"
+	 let "mask=$tmp ^ $fullone"
+ 	 a=(${ipaddr//./ })
+ 	 let "ipnetdec=${a[0]} * 16777216 + ${a[1]} * 65536 + ${a[2]} * 256 + ${a[3]}"
+  	 a=(${subnet//./ })
+	 let "subnetdec=${a[0]} * 16777216 + ${a[1]} * 65536 + ${a[2]} * 256 + ${a[3]}"
+	 let "ipnetdec=$ipnetdec & $mask"
+ 
+	 if [[ $subnetdec -eq $ipnetdec ]]; then 
+	   match=1
+	   break
+	 fi
+
+	fi
+
+	done < "./$LOGDIR/$xmlfile" 
+
+
+	if [[ $match -eq 1 ]];then
+
+	IPREGION=$region
+
+	fi
+  
 
     fi
 
-    RET=$(cat "./$LOGDIR/$xmlfile" | awk -v ipaddr="$1" '
-
-#function to verify if IP network address matches with the IP range
-function IpInRange(iprange, ipaddr)
-{
-
- #printf "Checking IP address %s in IP Range %s\n", ipaddr, iprange
-
- split(iprange, a, "/")
-
- subnetaddr=a[1]
- cidrlen=a[2]
-
- tmp=32-cidrlen
- ipmax=lshift(1,32)-1
- mask=and((compl(lshift(1,tmp)-1)),ipmax)
-
- split(ipaddr, b, ".")
- ipnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
-
- split(subnetaddr, b, ".")
- subnetdec = (b[1] * 2^24) + (b[2] * 2^16) + (b[3] * 2^8) + b[4]
-
-
- ipnet=and(ipnetdec, mask)
- subnet=and(subnetdec,mask)
-
- return (subnet == ipnet)
-}
-
-BEGIN{ region = "" }
-
-/Region Name/ { split($0, a, "\""); region=a[2]}
-
-/IpRange/ {split($0, a, "\""); ret=IpInRange(a[2], ipaddr); if (ret) {print  region} }
-
-    ')
-
-    IPREGION="$RET"
-
-  }
+ }
 
 
   print_log "Client does not support SMB Encyrption, verify if client is in the same region as Stoage Account"
