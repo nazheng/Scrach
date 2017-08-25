@@ -463,7 +463,7 @@ disable_log()
   PID=$(sudo pgrep tcpdump)
   sudo kill "$PID"
 
-  command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;echo 0 > /proc/fs/cifs/cifsFYI"
+  command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;modprobe cifs;echo 0 > /proc/fs/cifs/cifsFYI"
   sudo sh -c  "$command"
   dmesg -T > $CIFSLOG
 }
@@ -519,18 +519,22 @@ fi
 print_log "type the local mount point, followed by [ENTER]:" "info"
 read mountpoint
 
+eval mountpoint="$mountpoint"
+
 if [ ! -d "$mountpoint" ] ;then
-  mkdir "$mountpoint"
+  print_log "mount point "$mountpoint" does not exist, create it now" 'info'
+  mkdir -p "$mountpoint"
 fi
 
 print_log "Type the storage account access key, followed by [ENTER]:" "info"
 read password
 
-password='$password'
+password=\'$password\'
 
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
 
-command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password="$password",dir_mode=0777,file_mode=0777,sec=ntlmssp"
+command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
+echo $command
 sudo sh -c "$command"
 sleep 1
 
