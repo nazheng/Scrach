@@ -585,7 +585,7 @@ password=\'$password\'
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
 
 command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
-print_log $command "info"
+print_log "$command" "info"
 sudo sh -c "$command"
 sleep 1
 
