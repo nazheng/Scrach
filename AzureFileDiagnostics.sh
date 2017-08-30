@@ -148,7 +148,7 @@ DISTVER=''
 KERVER=''
 
 command -v lsb_release >/dev/null 2>&1  && DISTNAME=$(lsb_release -i) || DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
-command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  [0-9\\.]\\+ )  || DESTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
+command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  [0-9\\.]\\+ )  || DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 
 #DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
