@@ -16,7 +16,7 @@ print_log()
 
   case  "$2" in
     info)
-      echo '[RUNNNG]--------' "${1}"
+      echo '\033[30m''[RUNNNG]--------' "${1}"
       ;;
     warning)
       echo -e '\033[33m''[WARNING]-------' "${1}"
