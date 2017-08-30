@@ -16,7 +16,7 @@ print_log()
 
   case  "$2" in
     info)
-      echo '[INFO]--------' "${1}"
+      echo '[INFO]----------' "${1}"
       ;;
     warning)
       echo '[WARNING]-------' "${1}"
@@ -107,6 +107,10 @@ if [ $# -gt 0 ] ; then
   elif  ( [ -z "$UNCPATH" ] && (  [ -n "$ACCOUNT" ]  && [  -n "$SHARE" ] && [ -n "$ENVIRONMENT" ] ) ); then
 
     print_log  "Form the UNC path based on the options specified" "info"
+
+    ACCOUNT=${ACCOUNT,,}
+    SHARE=${SHARE,,}
+    ENVIRONMENT=${ENVIRONMENT,,}
 
     SUFFIX=''
     case "$ENVIRONMENT" in
