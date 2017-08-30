@@ -499,7 +499,7 @@ enable_log()
 
   command="tcpdump -i any port 445  -w ""$TCPLOG"" >/dev/null 2>&1 &"
   sudo sh -c  "$command"
-  command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control;echo 1 > /proc/fs/cifs/cifsFYI;echo 1 > /proc/fs/cifs/cifsFYI"
+  command="echo 'module cifs +p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* +p' > /sys/kernel/debug/dynamic_debug/control; modprobe cifs;echo 1 > /proc/fs/cifs/cifsFYI"
   sudo sh -c  "$command"
 }
 
