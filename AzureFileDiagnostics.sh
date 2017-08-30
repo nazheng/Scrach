@@ -173,20 +173,20 @@ case $DISTNAME  in
     ;;
 
   *openSUSE* )
-    if ( ver_l $DISTVER '13.2' ); then
+    if ( ver_lt $DISTVER '13.2' ); then
       print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
     fi
     ;;
   *SLES* )
-    if ( ver_l $DISTVER '12' ); then
+    if ( ver_lt $DISTVER '12' ); then
       print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
     fi
     ;;
 
   *Debian* )
-    if ( ver_l $DISTVER '8' ); then
+    if ( ver_lt $DISTVER '8' ); then
       print_log "We recommend running following Linux Distributions: Ubuntu Server 14.04+ | RHEL 7+ | CentOS 7+ | Debian 8 | openSUSE 13.2+ | SUSE Linux Enterprise Server 12, please refer to https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux for more information" "warning"
 
     fi
