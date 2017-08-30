@@ -16,17 +16,17 @@ print_log()
 
   case  "$2" in
     info)
-      echo '\033[30m''[RUNNNG]--------' "${1}"
+      echo '[INFO]--------' "${1}"
       ;;
     warning)
-      echo -e '\033[33m''[WARNING]-------' "${1}"
+      echo '[WARNING]-------' "${1}"
       ;;
     error)
-      echo -e '\033[31m''[ERROR]---------' "${1}"
+      echo '[ERROR]---------' "${1}"
       ;;
     *)
       echo
-      echo  -e '\033[32m''[RUNNNG]++++++++' "${1}"
+      echo '[RUNNNG]++++++++' "${1}"
 
       ;;
   esac
