@@ -117,7 +117,7 @@ if [ $# -gt 0 ] ; then
       azurecloud) SUFFIX='.file.core.windows.net' ;;
       azurechinacloud) SUFFIX='.file.core.chinacloudapi.cn' ;;
       azureusgovernment) SUFFIX='.file.usgovcloudapi.net' ;;
-      AzureGermanCloud) SUFFIX='.file.core.cloudapi.de' ;;
+      azuregermancloud) SUFFIX='.file.core.cloudapi.de' ;;
     esac
     SAFQDN="$ACCOUNT""$SUFFIX"
     UNCPATH="//""$SAFQDN""/""$SHARE"
