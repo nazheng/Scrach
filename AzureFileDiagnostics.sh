@@ -40,7 +40,7 @@ print_log()
 usage()
 {
   echo "options below are optional"
-  echo '-u | --uncpath <value> Specify Azure File share UNC path like \\storageaccount.file.core.windows.net\sharename. if this option is provided, below options are ignored'
+  echo '-u | --uncpath <value> Specify Azure File share UNC path like //storageaccount.file.core.windows.net/sharename. if this option is provided, below options are ignored'
   echo '-a | --account <value> Specify Storage Account Name'
   echo '-s | --share <value >Specify the file share name'
   echo '-e | --azureenvironment <value> Specify the Azure environment. Valid values are: AzureCloud, AzureChinaCloud, AzureGermanCloud, AzureUSGovernment. The default is AzureCloud'
