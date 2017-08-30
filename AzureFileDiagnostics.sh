@@ -583,9 +583,25 @@ if [ "$DIAGON" -eq 0 ]; then
 fi
 
 command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
+print_log "Try with mounting share using SMB3.0"
 print_log "$command" "info"
 sudo sh -c "$command"
+
+if [[ $? -gt 0 ]] ;then
+command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=2.1,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
+print_log "Try with mounting share using SMB2.1"
+print_log "$command" "info"
+sudo sh -c "$command"
+fi
+
+if [[ $? -gt 0 ]];then
+ print_log "Mounting share fails" "error"
+else
+ print_log "Mounting share succeeds" "info"
+fi
+
 sleep 1
+
 
 if [ "$DIAGON" -eq 0 ]; then
   disable_log
