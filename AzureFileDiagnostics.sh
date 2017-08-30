@@ -563,7 +563,7 @@ fi
 
 
 ## Prompt user to type the local mount point and storage account access key.
-print_log "type the local mount point, followed by [ENTER]:" "info"
+print_log "type the local mount point, followed by [ENTER]:"
 read mountpoint
 
 eval mountpoint="$mountpoint"
@@ -573,7 +573,7 @@ if [ ! -d "$mountpoint" ] ;then
   mkdir -p "$mountpoint"
 fi
 
-print_log "Type the storage account access key, followed by [ENTER]:" "info"
+print_log "Type the storage account access key, followed by [ENTER]:"
 read password
 
 password=\'$password\'
@@ -581,7 +581,7 @@ password=\'$password\'
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
 
 command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
-echo $command
+pring_log $command "info"
 sudo sh -c "$command"
 sleep 1
 
