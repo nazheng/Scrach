@@ -516,7 +516,7 @@ disable_log()
 
   command="echo 'module cifs -p' > /sys/kernel/debug/dynamic_debug/control;echo 'file fs/cifs/* -p' > /sys/kernel/debug/dynamic_debug/control;modprobe cifs;echo 0 > /proc/fs/cifs/cifsFYI"
   sudo sh -c  "$command"
-  dmesg -T > $CIFSLOG
+  sudo dmesg -T > $CIFSLOG
 }
 
 
