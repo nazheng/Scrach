@@ -561,11 +561,6 @@ do
   esac
 done
 
-if [ "$DIAGON" -eq 0 ]; then
-  enable_log
-fi
-
-
 ## Prompt user to type the local mount point and storage account access key.
 print_log "type the local mount point, followed by [ENTER]:"
 read mountpoint
@@ -581,8 +576,11 @@ print_log "Type the storage account access key, followed by [ENTER]:"
 read password
 
 password=\'$password\'
-
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
+
+if [ "$DIAGON" -eq 0 ]; then
+  enable_log
+fi
 
 command="mount -t cifs "$UNCPATH"  "$mountpoint" -o vers=3.0,username="$username",password=$password,dir_mode=0777,file_mode=0777,sec=ntlmssp"
 print_log "$command" "info"
