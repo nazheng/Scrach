@@ -16,7 +16,7 @@ print_log()
 
   case  "$2" in
     info)
-      echo '[INFO]----------' "${1}"
+      echo  "${1}"
       ;;
     warning)
       echo '[WARNING]-------' "${1}"
