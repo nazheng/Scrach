@@ -214,7 +214,7 @@ fi
 
 
 ## Check if SMB2.1 is supported. According to https://wiki.samba.org/index.php/LinuxCIFSKernel, SMb2.1 is firstly added into Kernel at version 3.7.
-print_log "Check if client has SMB2.1 support"
+print_log "Check if client has at least SMB2.1 support"
 
 ver_lt "$KERVER" "3.7"
 
