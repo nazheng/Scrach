@@ -273,7 +273,7 @@ if  [ -z "$SAFQDN" ]; then
   print_log "Type the storage account name, followed by [ENTER]:"  'info'
   read ACCOUNT
 
-  print_log "Type the share path, followed by [ENTER]:" "info"
+  print_log "Type the share name, followed by [ENTER]:" "info"
   read SHARE
 
   print_log "Choose the Azure Environment:"  "info"
