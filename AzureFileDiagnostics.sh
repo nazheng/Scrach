@@ -238,10 +238,10 @@ if [ $? -eq 0 ] ; then
   ver_lt "$DISTVER" "16.04"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB Encryption" "warning"
-    SMB3=0
+    SMB3=1
   else
     print_log "System supports SMB Encryption" "info"
-    SMB3=1
+    SMB3=0
   fi
 
 ## Other distributions check kernel versions.
