@@ -228,7 +228,7 @@ fi
 
 
 ##  Check if SMB3 encryption is supported.
-print_log "Check if client has SMB Encryption support "
+print_log "Check if client has SMB 3 Encryption support "
 
 echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
 
