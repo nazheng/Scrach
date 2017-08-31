@@ -154,7 +154,7 @@ command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
 
-print_log "Running on Linux Distribution $DISTNAME version $DISTVER, kernel version is $KERVER"
+print_log "Running on $DISTNAME version $DISTVER, kernel version is $KERVER"
 
 case $DISTNAME  in
   *Redhat* )
@@ -351,8 +351,8 @@ if [ "$SMB3" -eq 1 ]; then
       RET=$(cat "./$LOGDIR/download.html"  | grep -o 'https://download\.microsoft\.com[a-zA-Z0-9_/\-]*\.xml' | head -n 1)
 
 
-    #download the file into local file
-      print_log 'Downloading Azure Public IP range XML file' "info"
+      #download the file into local file
+      #print_log 'Downloading Azure Public IP range XML file' "info"
       wget -U firefox -qO "./$LOGDIR/$xmlfile"  "$RET"
     fi
 
