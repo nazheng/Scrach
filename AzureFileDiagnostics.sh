@@ -154,6 +154,10 @@ command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
 
+DISTNAME=$(echo $DISTNAME)
+DISTVER=$(echo $DISTVER)
+KERVER=$(echo $KERVER)
+
 print_log "Running on $DISTNAME version $DISTVER, kernel version is $KERVER"
 
 case $DISTNAME  in
