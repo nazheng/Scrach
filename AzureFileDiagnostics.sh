@@ -19,14 +19,14 @@ print_log()
       echo  "${1}"
       ;;
     warning)
-      echo '[WARNING]-------' "${1}"
+      echo 'Warning ' "${1}"
       ;;
     error)
-      echo '[ERROR]---------' "${1}"
+      echo 'Error ' "${1}"
       ;;
     *)
       echo
-      echo '[RUNNNG]++++++++' "${1}"
+      echo 'Checking ' "${1}"
 
       ;;
   esac
