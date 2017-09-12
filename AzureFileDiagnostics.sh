@@ -24,10 +24,10 @@ print_log()
       printf 'Warning ${1}\n"
       ;;
     error)
-      printf 'Error ${1}\n"
+      printf '${RED}Error ${1}${NC}\n"
       ;;
     *)      
-      printf '\n${RED}Checking ${1}${NC}\n"
+      printf '\nChecking ${1}\n"
 
       ;;
   esac
