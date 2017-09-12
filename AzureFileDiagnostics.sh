@@ -14,6 +14,7 @@ IPREGION=''
 print_log()
 {
   RED='\033[0;31m'
+  YELLOW='\033[0;33m'
   DEFAULT='\033[0m'
 
   case  "$2" in
@@ -21,7 +22,7 @@ print_log()
       printf "${1}\n"
       ;;
     warning)
-      printf "Warning ${1}\n"
+      printf "${YELLOW}Warning ${1}${DEFAULT}\n"
       ;;
     error)
       printf "${RED}Error ${1}${DEFAULT}\n"
