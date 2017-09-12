@@ -22,13 +22,13 @@ print_log()
       printf "${1}\n"
       ;;
     warning)
-      printf "${YELLOW}Warning ${1}${DEFAULT}\n"
+      printf "${YELLOW}Warning: ${1}${DEFAULT}\n"
       ;;
     error)
-      printf "${RED}Error ${1}${DEFAULT}\n"
+      printf "${RED}Error: ${1}${DEFAULT}\n"
       ;;
     *)
-      printf "\nChecking ${1}\n"
+      printf "\nChecking: ${1}\n"
       ;;
   esac
 
@@ -155,11 +155,12 @@ command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
 
+#Trim the whitespace
 DISTNAME=$(echo $DISTNAME)
 DISTVER=$(echo $DISTVER)
 KERVER=$(echo $KERVER)
 
-print_log "Running on $DISTNAME version $DISTVER, kernel version is $KERVER"
+print_log "Client running with $DISTNAME version $DISTVER, kernel version is $KERVER"
 
 case $DISTNAME  in
   *Redhat* )
@@ -230,9 +231,8 @@ fi
 
 ##  Check if SMB3 encryption is supported.
 print_log "Check if client has SMB 3 Encryption support "
-
-#echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
-
+echo "$DISTNAME"
+echo "$DISTVER"
 ## Ubuntu OS checks the distribution version
 if [[ $(echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1) -eq 0 ]] ; then
   ver_lt "$DISTVER" "16.04"
