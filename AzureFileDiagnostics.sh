@@ -234,8 +234,6 @@ print_log "Check if client has SMB 3 Encryption support "
 
 ## Ubuntu OS checks the distribution version
 if echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1 ; then
-   echo "$DISTNAME"
-   echo "$DISTVER"
   ver_lt "$DISTVER" "16.04"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
@@ -248,10 +246,7 @@ if echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1 ; then
   fi
 
 elif echo "$DISTNAME" | grep SLES >/dev/null 2>&1; then
-
   ver_lt "$DISTVER" "12.3"
-  echo "hit this path"
-  
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
     print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
