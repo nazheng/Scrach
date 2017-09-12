@@ -13,20 +13,21 @@ IPREGION=''
 ## print the log in custom format <to do: add color support>
 print_log()
 {
+  RED='\033[0;31m'
+  NC='\033[0m' # No Color
 
   case  "$2" in
     info)
-      echo  "${1}"
+      printf "${1}\n"
       ;;
     warning)
-      echo 'Warning ' "${1}"
+      printf 'Warning ${1}\n"
       ;;
     error)
-      echo 'Error ' "${1}"
+      printf 'Error ${1}\n"
       ;;
-    *)
-      echo
-      echo 'Checking ' "${1}"
+    *)      
+      printf '\n${RED}Checking ${1}${NC}\n"
 
       ;;
   esac
