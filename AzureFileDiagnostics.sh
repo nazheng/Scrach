@@ -234,7 +234,7 @@ print_log "Check if client has SMB 3 Encryption support "
 echo "$DISTNAME"
 echo "$DISTVER"
 ## Ubuntu OS checks the distribution version
-if [[ $(echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1) -eq 0 ]] ; then
+if echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1 ; then
   ver_lt "$DISTVER" "16.04"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
@@ -246,7 +246,7 @@ if [[ $(echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1) -eq 0 ]] ; then
     SMB3=0
   fi
 
-elif [[ $(echo "$DISTNAME" | grep SLES >/dev/null 2>&1) -eq 0 ]] ; then
+elif echo "$DISTNAME" | grep SLES >/dev/null 2>&1; then
 
   ver_lt "$DISTVER" "12.3"
   echo "$DISTVER"
