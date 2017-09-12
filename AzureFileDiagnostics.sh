@@ -14,21 +14,20 @@ IPREGION=''
 print_log()
 {
   RED='\033[0;31m'
-  NC='\033[0m' # No Color
+  DEFAULT='\033[0m'
 
   case  "$2" in
     info)
       printf "${1}\n"
       ;;
     warning)
-      printf 'Warning ${1}\n"
+      printf "Warning ${1}\n"
       ;;
     error)
-      printf '${RED}Error ${1}${NC}\n"
+      printf "${RED}Error ${1}${DEFAULT}\n"
       ;;
-    *)      
-      printf '\nChecking ${1}\n"
-
+    *)
+      printf "\nChecking ${1}\n"
       ;;
   esac
 
@@ -231,11 +230,10 @@ fi
 ##  Check if SMB3 encryption is supported.
 print_log "Check if client has SMB 3 Encryption support "
 
-echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
+#echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1
 
 ## Ubuntu OS checks the distribution version
-if [ $? -eq 0 ] ; then
-
+if [[ $(echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1) -eq 0 ]] ; then
   ver_lt "$DISTVER" "16.04"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
@@ -247,6 +245,18 @@ if [ $? -eq 0 ] ; then
     SMB3=0
   fi
 
+elif [[ $(echo "$DISTNAME" | grep SLES >/dev/null 2>&1) -eq 0 ]] ; then
+
+  ver_lt "$DISTVER" "12.3"
+  if [ $? -eq 0 ] ; then
+    print_log "System DOES NOT support SMB 3 Encryption" "warning"
+    print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
+    SMB3=1
+  else
+    print_log "System supports SMB 3 Encryption" "info"
+    print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
+    SMB3=0
+  fi
 ## Other distributions check kernel versions.
 else
   ver_lt "$KERVER" "4.11"
@@ -270,15 +280,22 @@ fi
 
 
 
-
 ## Prompt user for UNC path if no options are provided.
 print_log "Check if client has any connectivity issue with storage account"
 if  [ -z "$SAFQDN" ]; then
-  print_log "Type the storage account name, followed by [ENTER]:"  'info'
-  read ACCOUNT
-
-  print_log "Type the share name, followed by [ENTER]:" "info"
-  read SHARE
+  ACCOUNT=''
+  while [ -z "$ACCOUNT" ];
+  do
+    print_log "Type the storage account name, followed by [ENTER]:"  'info'
+    read ACCOUNT
+  done
+ 
+  SHARE=''
+  while [ -z "$SHARE" ];
+  do
+   print_log "Type the share name, followed by [ENTER]:" "info"
+   read SHARE
+  done
 
   print_log "Choose the Azure Environment:"  "info"
   PS3='Please enter your choice: '
@@ -364,7 +381,7 @@ if [ "$SMB3" -eq 1 ]; then
       wget -U firefox -qO "./$LOGDIR/$xmlfile"  "$RET"
     fi
 
-    
+    ## some Linuux distributions do no have GNU version AWK installed. MAWK does not support bitwise operation. Use a bash version as a workaround although it is a bit slower than gawk.     
     IPREGION=''
     awk -V >/dev/null 2>&1 
 
@@ -570,8 +587,12 @@ do
 done
 
 ## Prompt user to type the local mount point and storage account access key.
+mountpoint=''
+while [ -z "$mountpoint" ] ; 
+do
 print_log "type the local mount point, followed by [ENTER]:"
 read mountpoint
+done
 
 eval mountpoint="$mountpoint"
 
@@ -580,8 +601,12 @@ if [ ! -d "$mountpoint" ] ;then
   mkdir -p "$mountpoint"
 fi
 
+password=''
+while [ -z "$password" ] ;
+do
 print_log "Type the storage account access key, followed by [ENTER]:"
 read password
+done
 
 password=\'$password\'
 username=$( echo "$SAFQDN" | cut -d '.' -f 1)
