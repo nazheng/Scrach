@@ -237,11 +237,9 @@ if echo "$DISTNAME" | grep Ubuntu >/dev/null 2>&1 ; then
   ver_lt "$DISTVER" "16.04"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
-    print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
     SMB3=1
   else
     print_log "System supports SMB 3 Encryption" "info"
-    print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
     SMB3=0
   fi
 
@@ -249,11 +247,9 @@ elif echo "$DISTNAME" | grep SLES >/dev/null 2>&1; then
   ver_lt "$DISTVER" "12.3"
   if [ $? -eq 0 ] ; then
     print_log "System DOES NOT support SMB 3 Encryption" "warning"
-    print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
     SMB3=1
   else
     print_log "System supports SMB 3 Encryption" "info"
-    print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
     SMB3=0
   fi
 ## Other distributions check kernel versions.
@@ -267,17 +263,15 @@ else
     print_log "System supports SMB 3 Encryption" "info"
     SMB3=0
   fi
-  
-  ## Check if system has fix for known idle timeout/reconnect issues, not terminate error though.
-  print_log "Check if client has been patched with the recommended kernel update for idle timeout issue"
-  if ( ( [[  "$KERVER" == "4.9" ]] ) && ( ver_gt "$KERVER"  "4.9" ) ) || ( ( ver_gt "$KERVER"  "4.8.16" ) &&  ( [[  "KEVER" ==  "4.8.16" ]] ) ) || ( ( ver_gt "$KERVER"  "4.4.40" )  &&  ( [[  "KEVER" ==  "4.4.40"  ]]) )  ; then
-    print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
-  else
-  print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
-  fi
 fi
 
-
+## Check if system has fix for known idle timeout/reconnect issues, not terminate error though.
+print_log "Check if client has been patched with the recommended kernel update for idle timeout issue"
+if ( ( [[  "$KERVER" == "4.9" ]] ) && ( ver_gt "$KERVER"  "4.9" ) ) || ( ( ver_gt "$KERVER"  "4.8.16" ) &&  ( [[  "KEVER" ==  "4.8.16" ]] ) ) || ( ( ver_gt "$KERVER"  "4.4.40" )  &&  ( [[  "KEVER" ==  "4.4.40"  ]]) )  ; then
+   print_log "Kernel has been patched with the fixes that prevent idle timeout issues" "info"
+else
+ print_log "Kernel has not been patched with the fixes that prevent idle timeout issues, more information, please refer to https://docs.microsoft.com/en-us/azure/storage/storage-troubleshoot-linux-file-connection-problems#mount-error112-host-is-down-because-of-a-reconnection-time-out" "warning"
+fi
 
 ## Prompt user for UNC path if no options are provided.
 print_log "Check if client has any connectivity issue with storage account"
