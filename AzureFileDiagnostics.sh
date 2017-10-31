@@ -19,16 +19,16 @@ print_log()
 
   case  "$2" in
     info)
-      printf "$(date --utc +%Y%m%d_%H%M%SZ) ${1}\n" | tee -a $LOGDIR/output.txt
+      printf "$(date --utc +%FT%T.%3NZ) ${1}\n" | tee -a $LOGDIR/output.txt
       ;;
     warning)
-      printf "$(date --utc +%Y%m%d_%H%M%SZ) ${YELLOW}Warning: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
+      printf "${YELLOW}$(date --utc +%FT%T.%3NZ) Warning: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
       ;;
     error)
-      printf "$(date --utc +%Y%m%d_%H%M%SZ) ${RED}Error: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
+      printf "${RED}$(date --utc +%FT%T.%3NZ) Error: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
       ;;
     *)
-      printf "\n$(date --utc +%Y%m%d_%H%M%SZ) Checking: ${1}\n" | tee -a $LOGDIR/output.txt
+      printf "\n$(date --utc +%FT%T.%3NZ) Checking: ${1}\n" | tee -a $LOGDIR/output.txt
       ;;
   esac
 
