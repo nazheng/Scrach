@@ -19,16 +19,16 @@ print_log()
 
   case  "$2" in
     info)
-      printf "${1}\n"
+      printf "${1}\n" | tee -a $LOGDIR/output.txt
       ;;
     warning)
-      printf "${YELLOW}Warning: ${1}${DEFAULT}\n"
+      printf "${YELLOW}Warning: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
       ;;
     error)
-      printf "${RED}Error: ${1}${DEFAULT}\n"
+      printf "${RED}Error: ${1}${DEFAULT}\n" | tee -a $LOGDIR/output.txt
       ;;
     *)
-      printf "\nChecking: ${1}\n"
+      printf "\nChecking: ${1}\n" | tee -a $LOGDIR/output.txt
       ;;
   esac
 
@@ -137,11 +137,14 @@ fi
 ver_gt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$1"; }
 ver_lt() { test "$(printf  "$1\n$2"  | sort -V | head -n 1)" != "$2"; }
 
-print_log "Create a folder MSFileMountDiagLog to save the script output"
+
 LOGDIR="MSFileMountDiagLog"
 if [ ! -d "$LOGDIR" ]; then
   mkdir "$LOGDIR"
 fi
+
+print_log "Create a folder MSFileMountDiagLog to save the script output"
+
 
 ## Verify Linux distribution version. There is a list of recommended images for use
 DISTNAME=''
