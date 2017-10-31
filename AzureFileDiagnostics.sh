@@ -154,13 +154,15 @@ command -v lsb_release >/dev/null 2>&1  && DISTVER=$(lsb_release -r |  grep -o  
 #DISTNAME=$(cat /etc/*release | grep \\bNAME= | cut -d = -f 2)
 #DISTVER=$(cat /etc/*release | grep \\bVERSION_ID= | grep -o  [0-9\\.]\\+)
 KERVER=$(uname -r | cut -d - -f 1)
+KERVEREXTRA=$(uname -r)
 
 #Trim the whitespace
 DISTNAME=$(echo $DISTNAME)
 DISTVER=$(echo $DISTVER)
 KERVER=$(echo $KERVER)
+KERVEREXTRA=$(echo $KERVEREXTRA)
 
-print_log "Client running with $DISTNAME version $DISTVER, kernel version is $KERVER"
+print_log "Client running with $DISTNAME version $DISTVER, kernel version is $KERVEREXTRA"
 
 case $DISTNAME  in
   *Redhat* )
